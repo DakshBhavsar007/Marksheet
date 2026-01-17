@@ -504,6 +504,62 @@
                 width: 100%;
             }
         }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 25px;
+            }
+
+            .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .brand h1 {
+                font-size: 2rem;
+            }
+
+            .brand p {
+                font-size: 0.95rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .control-input,
+            select.control-input {
+                width: 100% !important;
+            }
+
+            .view-tabs {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .tab-btn {
+                flex: 1;
+                white-space: nowrap;
+            }
+
+            /* Hide theme text if space is tight, keep icon */
+            .theme-switch {
+                transform: scale(0.9);
+            }
+        }
     </style>
 </head>
 
