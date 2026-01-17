@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -17,25 +17,40 @@
 
     <style>
         :root {
-            /* Palette: Cyber-Glass Dark */
-            --bg-dark: #0f111a;
-            --bg-card: rgba(30, 34, 45, 0.6);
-            --bg-glass: rgba(255, 255, 255, 0.03);
+            /* Defaults (Dark Mode) */
+            --bg-body: #0f111a;
+            --bg-glass: rgba(30, 34, 45, 0.6);
+            --bg-glass-hover: rgba(255, 255, 255, 0.03);
             --border-glass: rgba(255, 255, 255, 0.08);
 
             --primary: #6c5ce7;
             --primary-glow: rgba(108, 92, 231, 0.4);
+
+            --text-main: #ffffff;
+            --text-muted: #a4b0be;
+            --text-inv: #000;
 
             --accent: #00cec9;
             --secondary: #e84393;
             --success: #00b894;
             --warning: #fdcb6e;
 
-            --text-main: #ffffff;
-            --text-muted: #a4b0be;
-
-            --font-main: 'Outfit', sans-serif;
             --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-body: #f0f2f5;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --bg-glass-hover: rgba(0, 0, 0, 0.02);
+            --border-glass: rgba(0, 0, 0, 0.05);
+
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --text-inv: #fff;
+
+            --primary: #5844e3;
+            /* Slightly darker for contrast */
+            --primary-glow: rgba(88, 68, 227, 0.2);
         }
 
         * {
@@ -46,16 +61,17 @@
         }
 
         body {
-            font-family: var(--font-main);
-            background-color: var(--bg-dark);
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-body);
             background-image:
-                radial-gradient(circle at 10% 20%, rgba(108, 92, 231, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 206, 201, 0.15) 0%, transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(108, 92, 231, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 206, 201, 0.05) 0%, transparent 40%);
             background-attachment: fixed;
             color: var(--text-main);
             min-height: 100vh;
             padding: 40px 20px;
             overflow-x: hidden;
+            transition: background 0.5s var(--ease), color 0.5s var(--ease);
         }
 
         ::-webkit-scrollbar {
@@ -64,11 +80,11 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: var(--bg-dark);
+            background: var(--bg-body);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #333;
+            background: #888;
             border-radius: 4px;
         }
 
@@ -76,7 +92,6 @@
             background: #555;
         }
 
-        /* --- Layout & Glass Components --- */
         .container {
             max-width: 1600px;
             margin: 0 auto;
@@ -85,15 +100,16 @@
         }
 
         .glass-panel {
-            background: var(--bg-card);
+            background: var(--bg-glass);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--border-glass);
             border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            transition: background 0.5s var(--ease), box-shadow 0.3s var(--ease);
         }
 
-        /* --- Header --- */
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
@@ -106,7 +122,7 @@
         .brand h1 {
             font-size: 3rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #fff 0%, #a29bfe 100%);
+            background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 5px;
@@ -123,6 +139,7 @@
         .actions {
             display: flex;
             gap: 15px;
+            align-items: center;
         }
 
         .btn {
@@ -138,26 +155,71 @@
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
+            font-family: inherit;
         }
 
         .btn:hover {
             transform: translateY(-3px);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .btn-primary {
+        /* Theme Toggle Switch */
+        .theme-switch {
+            position: relative;
+            width: 80px;
+            height: 40px;
+            border-radius: 50px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            transition: all 0.3s var(--ease);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-switch .icon {
+            font-size: 1.2rem;
+            width: 50%;
+            text-align: center;
+            z-index: 1;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .theme-switch .ball {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 30px;
+            height: 30px;
             background: var(--primary);
-            border-color: var(--primary);
-            box-shadow: 0 10px 30px var(--primary-glow);
+            border-radius: 50%;
+            transition: transform 0.4s var(--ease);
+            box-shadow: 0 2px 10px var(--primary-glow);
+            z-index: 0;
         }
 
-        .btn-primary:hover {
-            background: #5d4de1;
-            box-shadow: 0 15px 40px var(--primary-glow);
+        /* Light Mode State for Switch */
+        [data-theme="light"] .theme-switch .ball {
+            transform: translateX(40px);
+            background: #f1c40f;
+            /* Sun color */
+            box-shadow: 0 2px 10px rgba(241, 196, 15, 0.4);
         }
 
-        /* --- Dashboard Grid --- */
+        [data-theme="light"] .theme-switch .icon.sun {
+            color: #fff;
+        }
+
+        [data-theme="dark"] .theme-switch .icon.moon {
+            color: #fff;
+        }
+
+
+        /* Dashboard & Charts */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -165,7 +227,6 @@
             margin-bottom: 30px;
         }
 
-        /* Chart Section */
         .analytics-card {
             padding: 25px;
             height: 350px;
@@ -173,13 +234,7 @@
         }
 
         .analytics-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 20px;
-        }
-
-        .analytics-title {
             font-size: 1.2rem;
             font-weight: 600;
             display: flex;
@@ -187,7 +242,7 @@
             gap: 10px;
         }
 
-        /* Stats Cards - Mini */
+        /* Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -204,7 +259,7 @@
 
         .stat-card:hover {
             transform: translateY(-5px) scale(1.02);
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary);
         }
 
         .stat-label {
@@ -219,7 +274,7 @@
         .stat-value {
             font-size: 2.5rem;
             font-weight: 700;
-            background: linear-gradient(to right, #fff, #dfe6e9);
+            background: linear-gradient(to right, var(--text-main), var(--text-muted));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -230,9 +285,10 @@
             bottom: 20px;
             font-size: 3rem;
             opacity: 0.1;
+            color: var(--text-main);
         }
 
-        /* --- Controls Bar --- */
+        /* Controls */
         .controls-bar {
             padding: 15px;
             margin-bottom: 30px;
@@ -243,9 +299,9 @@
             gap: 20px;
         }
 
-        /* TABS */
         .view-tabs {
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--bg-glass-hover);
+            border: 1px solid var(--border-glass);
             border-radius: 50px;
             padding: 5px;
             display: flex;
@@ -263,9 +319,14 @@
             position: relative;
             z-index: 2;
             transition: color 0.3s ease;
+            font-family: inherit;
         }
 
         .tab-btn.active {
+            color: #fff;
+        }
+
+        [data-theme="light"] .tab-btn.active {
             color: #fff;
         }
 
@@ -281,7 +342,6 @@
             box-shadow: 0 4px 15px var(--primary-glow);
         }
 
-        /* Filters */
         .filter-group {
             display: flex;
             gap: 15px;
@@ -303,28 +363,26 @@
 
         .control-input {
             width: 100%;
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--bg-glass-hover);
             border: 1px solid var(--border-glass);
             padding: 12px 12px 12px 45px;
             border-radius: 12px;
-            color: #fff;
+            color: var(--text-main);
             font-family: inherit;
             outline: none;
             transition: all 0.3s ease;
         }
 
         .control-input:focus {
-            background: rgba(0, 0, 0, 0.4);
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+            box-shadow: 0 0 0 4px var(--primary-glow);
         }
 
         select.control-input {
             padding: 12px 20px;
-            cursor: pointer;
         }
 
-        /* --- Table --- */
+        /* Table */
         .table-wrapper {
             overflow: hidden;
         }
@@ -349,13 +407,12 @@
             font-size: 0.8rem;
             letter-spacing: 0.5px;
             border-bottom: 1px solid var(--border-glass);
-            background: rgba(15, 17, 26, 0.95);
+            background: var(--bg-glass);
             backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
             z-index: 10;
             cursor: pointer;
-            transition: color 0.2s;
             user-select: none;
         }
 
@@ -363,18 +420,13 @@
             color: var(--primary);
         }
 
-        thead th i {
-            margin-left: 5px;
-            opacity: 0.5;
-        }
-
         tbody tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border-glass);
             transition: background 0.2s;
         }
 
         tbody tr:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--bg-glass-hover);
         }
 
         td {
@@ -382,7 +434,6 @@
             white-space: nowrap;
         }
 
-        /* Cell Styling */
         .cell-rank {
             font-weight: 800;
             font-size: 1.1rem;
@@ -395,29 +446,22 @@
             background: rgba(0, 184, 148, 0.1);
             padding: 6px 12px;
             border-radius: 6px;
-            display: inline-block;
         }
 
-        .top-rank {
-            position: relative;
-        }
-
+        /* Highlights */
         .top-rank td {
-            background: linear-gradient(90deg, rgba(253, 203, 110, 0.05) 0%, transparent 100%);
-            border-bottom-color: rgba(253, 203, 110, 0.1);
+            background: linear-gradient(90deg, rgba(253, 203, 110, 0.1) 0%, transparent 100%);
         }
 
         .top-rank .cell-rank {
             color: var(--warning);
-            text-shadow: 0 0 10px rgba(253, 203, 110, 0.4);
         }
 
         .highlight-row {
             border-left: 3px solid var(--secondary);
-            background: linear-gradient(90deg, rgba(232, 67, 147, 0.05) 0%, transparent 100%);
+            background: linear-gradient(90deg, rgba(232, 67, 147, 0.1) 0%, transparent 100%);
         }
 
-        /* Animations */
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -432,21 +476,15 @@
 
         .fade-in {
             animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
             to {
                 opacity: 1;
-                transform: translateY(0);
             }
         }
 
-        /* Responsive */
         @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -455,10 +493,6 @@
             .controls-bar {
                 flex-direction: column;
                 align-items: stretch;
-            }
-
-            .filter-group {
-                flex-wrap: wrap;
             }
 
             .search-wrapper {
@@ -478,39 +512,43 @@
                 <p>Advanced Academic Performance Dashboard • SY4 Sem-III</p>
             </div>
             <div class="actions">
+                <!-- Theme Toggle -->
+                <div class="theme-switch" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="ri-moon-line icon moon"></i>
+                    <i class="ri-sun-line icon sun"></i>
+                    <div class="ball"></div>
+                </div>
+
                 <button class="btn" onclick="exportCSV()"><i class="ri-download-line"></i> Export CSV</button>
             </div>
         </header>
 
         <!-- DASHBOARD -->
         <div class="dashboard-grid">
-            <!-- Main Chart -->
             <div class="glass-panel analytics-card">
                 <div class="analytics-header">
-                    <div class="analytics-title">
+                    <div style="display:flex;align-items:center;gap:10px">
                         <i class="ri-bar-chart-grouped-line" style="color: var(--accent);"></i>
                         Subject Performance Analysis
                     </div>
                 </div>
-                <!-- Canvas Container -->
                 <div style="position: relative; height: 260px; width: 100%;">
                     <canvas id="gradeChart"></canvas>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--primary);">
                     <i class="ri-user-star-line stat-icon"></i>
                     <span class="stat-label">Top Performer</span>
                     <span class="stat-value" id="stat-topper">--</span>
-                    <small style="color: var(--primary); margin-top: 5px;">Highest Total</small>
+                    <small style="color: var(--primary);">Highest Total</small>
                 </div>
                 <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--success);">
                     <i class="ri-group-line stat-icon"></i>
                     <span class="stat-label">Total Students</span>
                     <span class="stat-value" id="stat-count">--</span>
-                    <small style="color: var(--success); margin-top: 5px;">Active Records</small>
+                    <small style="color: var(--success);">Active Records</small>
                 </div>
                 <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--secondary);">
                     <i class="ri-functions-line stat-icon"></i>
@@ -527,19 +565,16 @@
 
         <!-- CONTROLS -->
         <div class="glass-panel controls-bar">
-
-            <!-- Tabs -->
             <div class="view-tabs">
                 <div class="tab-indicator" id="tabIndicator"></div>
                 <button class="tab-btn active" onclick="setMode('new', this)">Rank View</button>
                 <button class="tab-btn" onclick="setMode('original', this)">Classic View</button>
             </div>
 
-            <!-- Filters -->
             <div class="filter-group">
                 <div class="search-wrapper">
                     <i class="ri-search-line"></i>
-                    <input type="text" class="control-input" id="searchInput" placeholder="Search any detail...">
+                    <input type="text" class="control-input" id="searchInput" placeholder="Search...">
                 </div>
                 <select class="control-input" id="branchFilter" style="width: 150px;">
                     <option value="">All Branches</option>
@@ -570,59 +605,64 @@
                             <th onclick="sortTable('total')">Total</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                        <!-- Rows injected by JS -->
-                    </tbody>
+                    <tbody id="tableBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Data & Scripts -->
+    <!-- Data -->
     <script src="new_data.js"></script>
     <script>
-        // --- 1. State Management ---
-        let currentMode = 'new'; // 'new' (Rank) | 'original' (Classic)
+        // --- Theme Logic ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Update chart colors on theme change
+            updateChart();
+        }
+
+        // Load Persisted Theme
+        (function () {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+
+        // --- App Logic ---
+        let currentMode = 'new';
         let filteredData = [];
         let gradeChart = null;
 
-        // Process initial ranking
         const allData = data.map((s, i) => {
-            // Recalculate total just in case
             s.total = s.ps + s.fsd + s.fcsp + s.de;
             return s;
         }).sort((a, b) => b.total - a.total).map((s, i) => ({ ...s, rank: i + 1 }));
 
-        // --- 2. View Logic ---
         function setAnimation(el) {
-            const tabs = document.querySelectorAll('.tab-btn');
             const indicator = document.getElementById('tabIndicator');
-
-            // Layout math for the slide indicator
             const rect = el.getBoundingClientRect();
             const parentRect = el.parentElement.getBoundingClientRect();
-
             indicator.style.width = `${rect.width}px`;
             indicator.style.left = `${rect.left - parentRect.left}px`;
-
-            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
         }
 
         function setMode(mode, el) {
             currentMode = mode;
             setAnimation(el);
-            filterData(); // triggers render
+            filterData();
         }
 
-        // Initialize Tab
         window.onload = () => {
-            const firstTab = document.querySelector('.tab-btn');
-            setAnimation(firstTab);
+            setAnimation(document.querySelector('.tab-btn'));
 
-            // Populate Filters
             const branches = [...new Set(allData.map(s => s.branch))].sort();
-            const divisions = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9']; // Fixed sequence
+            const divisions = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9'];
 
             const bSelect = document.getElementById('branchFilter');
             branches.forEach(b => bSelect.add(new Option(b, b)));
@@ -630,17 +670,13 @@
             const dSelect = document.getElementById('divFilter');
             divisions.forEach(d => dSelect.add(new Option(d, d)));
 
-            // Init
             filterData();
         };
 
-        // --- 3. Core Logic ---
         function getStudentModeData(student) {
             let roll, div;
-
             if (currentMode === 'new') {
                 roll = student.rank;
-                // Dynamic Division Calculation
                 const r = student.rank;
                 if (r <= 35) div = 'D1';
                 else if (r <= 70) div = 'D2';
@@ -665,19 +701,12 @@
 
             filteredData = allData.filter(s => {
                 const modeData = getStudentModeData(s);
-
-                // Search Logic (Intelligent)
                 const isNum = /^\d+$/.test(search);
                 let matchesSearch = false;
 
                 if (!search) matchesSearch = true;
-                else if (isNum && search.length < 5) {
-                    // Search by current displayed Roll/Rank
-                    matchesSearch = (modeData.roll == search);
-                } else {
-                    matchesSearch = s.name.toLowerCase().includes(search) ||
-                        s.enrollment.includes(search);
-                }
+                else if (isNum && search.length < 5) matchesSearch = (modeData.roll == search);
+                else matchesSearch = s.name.toLowerCase().includes(search) || s.enrollment.includes(search);
 
                 const matchesBranch = !branch || s.branch === branch;
                 const matchesDiv = !divSelect || modeData.div === divSelect;
@@ -685,25 +714,20 @@
                 return matchesSearch && matchesBranch && matchesDiv;
             });
 
-            // Auto-sort based on mode standard
-            if (currentMode === 'new') {
-                filteredData.sort((a, b) => a.rank - b.rank);
-            } else {
-                filteredData.sort((a, b) => a.roll - b.roll);
-            }
+            if (currentMode === 'new') filteredData.sort((a, b) => a.rank - b.rank);
+            else filteredData.sort((a, b) => a.roll - b.roll);
 
             renderTable();
             updateStats();
             updateChart();
         }
 
-        // --- 4. Rendering ---
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
             if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:40px; color:var(--text-muted)">No records found matching criteria</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:40px; color:var(--text-muted)">No records found</td></tr>`;
                 return;
             }
 
@@ -711,20 +735,18 @@
                 const { roll, div } = getStudentModeData(s);
                 const tr = document.createElement('tr');
                 tr.className = 'fade-in';
-                tr.style.animationDelay = `${idx * 0.01}s`; // Staggered animation
+                tr.style.animationDelay = `${idx * 0.01}s`;
 
-                // Styling classes
                 if (s.rank <= 3) tr.classList.add('top-rank');
-                // Specific Highlights
                 if ([37, 52, 62, 131, 97].includes(s.roll)) tr.classList.add('highlight-row');
 
                 tr.innerHTML = `
                     <td class="cell-rank">#${s.rank}</td>
                     <td style="font-weight:600">${roll}</td>
-                    <td><span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-size:0.85rem">${div}</span></td>
+                    <td><span style="background:var(--bg-glass-hover); padding:2px 8px; border-radius:4px; font-size:0.85rem">${div}</span></td>
                     <td>${s.branch}</td>
                     <td style="font-family:monospace; color:var(--text-muted)">${s.enrollment}</td>
-                    <td style="font-weight:500; color: #fff">${s.name}</td>
+                    <td style="font-weight:500;">${s.name}</td>
                     <td>${s.mentor}</td>
                     <td>${s.ps}</td>
                     <td>${s.fsd}</td>
@@ -738,102 +760,69 @@
 
         function updateStats() {
             if (filteredData.length === 0) return;
-
-            // Avg
             const total = filteredData.reduce((acc, curr) => acc + curr.total, 0);
             const avg = (total / filteredData.length).toFixed(1);
-
-            // Topper of current filtered set
             const topper = filteredData.reduce((prev, current) => (prev.total > current.total) ? prev : current);
-
-            // Animate Numbers
             document.getElementById('stat-count').innerText = filteredData.length;
             document.getElementById('stat-avg').innerText = avg;
             document.getElementById('stat-topper').innerText = topper.total;
         }
 
-        // --- 5. Charts ---
         function updateChart() {
             const ctx = document.getElementById('gradeChart').getContext('2d');
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+            const txtColor = isDark ? '#a4b0be' : '#636e72';
 
             if (gradeChart) gradeChart.destroy();
 
-            // Calculate Subject Averages
             const subjects = ['PS', 'FSD', 'FCSP', 'DE'];
             const avgs = subjects.map(sub => {
                 const sum = filteredData.reduce((acc, s) => acc + s[sub.toLowerCase()], 0);
                 return (sum / filteredData.length).toFixed(1);
             });
 
-            // Calculate >90, >80 ranges for first subject as example dist
-            // Simplified: Just show Subject Performance Comparison
-
             gradeChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Prob. & Stats', 'Full Stack Dev', 'FCSP / Python', 'Digital Elec.'],
                     datasets: [{
-                        label: 'Average Class Score',
+                        label: 'Avg Score',
                         data: avgs,
-                        backgroundColor: [
-                            'rgba(108, 92, 231, 0.7)',
-                            'rgba(0, 206, 201, 0.7)',
-                            'rgba(232, 67, 147, 0.7)',
-                            'rgba(253, 203, 110, 0.7)'
-                        ],
-                        borderColor: [
-                            '#6c5ce7', '#00cec9', '#e84393', '#fdcb6e'
-                        ],
-                        borderWidth: 1,
+                        backgroundColor: ['rgba(108, 92, 231, 0.7)', 'rgba(0, 206, 201, 0.7)', 'rgba(232, 67, 147, 0.7)', 'rgba(253, 203, 110, 0.7)'],
                         borderRadius: 8,
-                        barThickness: 50
+                        barThickness: 40
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 17, 26, 0.9)',
-                            padding: 12,
-                            titleFont: { family: 'Outfit', size: 14 },
-                            bodyFont: { family: 'Outfit', size: 14 }
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#a4b0be', font: { family: 'Outfit' } }
+                            beginAtZero: true, max: 100,
+                            grid: { color: gridColor },
+                            ticks: { color: txtColor }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { color: '#fff', font: { family: 'Outfit' } }
+                            ticks: { color: txtColor }
                         }
                     }
                 }
             });
         }
 
-        // --- 6. Sorting ---
         let sortDir = 'desc';
         function sortTable(key) {
             sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-
             filteredData.sort((a, b) => {
                 let valA = a[key];
                 let valB = b[key];
-
-                // Handle dynamic column sorts
                 if (key === 'roll' || key === 'div') {
-                    const dataA = getStudentModeData(a);
-                    const dataB = getStudentModeData(b);
-                    valA = dataA[key];
-                    valB = dataB[key];
+                    valA = getStudentModeData(a)[key];
+                    valB = getStudentModeData(b)[key];
                 }
-
                 if (valA < valB) return sortDir === 'asc' ? -1 : 1;
                 if (valA > valB) return sortDir === 'asc' ? 1 : -1;
                 return 0;
@@ -841,28 +830,22 @@
             renderTable();
         }
 
-        // --- 7. Export ---
         function exportCSV() {
             let csv = 'Rank,Roll No,Division,Branch,Enrollment,Name,Mentor,PS,FSD,FCSP,DE,Total\n';
-
             filteredData.forEach(s => {
                 const { roll, div } = getStudentModeData(s);
                 csv += `${s.rank},${roll},${div},${s.branch},${s.enrollment},"${s.name}",${s.mentor},${s.ps},${s.fsd},${s.fcsp},${s.de},${s.total}\n`;
             });
-
             const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Marksheet_Export_${currentMode}.csv`;
-            a.click();
+            const Link = document.createElement('a');
+            Link.href = window.URL.createObjectURL(blob);
+            Link.download = `Marksheet_${currentMode}.csv`;
+            Link.click();
         }
 
-        // Event Listeners
         document.getElementById('searchInput').addEventListener('input', filterData);
         document.getElementById('branchFilter').addEventListener('change', filterData);
         document.getElementById('divFilter').addEventListener('change', filterData);
-
     </script>
 </body>
 
