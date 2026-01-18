@@ -467,6 +467,11 @@
             background: linear-gradient(90deg, rgba(232, 67, 147, 0.1) 0%, transparent 100%);
         }
 
+        .highlight-green {
+            border-left: 3px solid var(--success);
+            background: linear-gradient(90deg, rgba(0, 184, 148, 0.1) 0%, transparent 100%);
+        }
+
         @keyframes fadeInDown {
             from {
                 opacity: 0;
@@ -800,6 +805,7 @@
 
                 if (s.rank <= 3) tr.classList.add('top-rank');
                 if ([37, 52, 62, 131, 97].includes(s.roll)) tr.classList.add('highlight-row');
+                if (s.name === 'PORE KRISHA CHETANBHAI') tr.classList.add('highlight-green');
 
                 tr.innerHTML = `
                     <td class="cell-rank">#${s.rank}</td>
