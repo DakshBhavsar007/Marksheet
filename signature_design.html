@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Design | Daksh Bhavsar</title>
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #0d1117;
+            /* Darker, like the image */
+            --primary: #58a6ff;
+            /* A nice blue for the label */
+            --text-main: #ffffff;
+            --accent: #ffd32a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            background-image:
+                radial-gradient(circle at 50% 0%, #171b26 0%, #0d1117 70%);
+            /* Subtle top glow */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+        }
+
+        .signature-container {
+            position: relative;
+            text-align: center;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* DIGITAL SIGNATURE Label */
+        .sig-label {
+            font-size: 0.75rem;
+            color: #5c6b9f;
+            /* Muted blue-purple as in image */
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 500;
+            margin-bottom: -15px;
+            /* Slight overlap or closeness */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            margin-right: 30px;
+            /* Offset to align visually */
+            position: relative;
+        }
+
+        /* The Name "Daksh Bhavsar" */
+        .sig-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-family: 'Great Vibes', cursive;
+            font-size: 5.5rem;
+            /* Large and elegant */
+            text-align: center;
+            width: auto;
+            min-width: 400px;
+            padding: 10px;
+            line-height: 1.2;
+            z-index: 2;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            cursor: default;
+        }
+
+        .sig-input::selection {
+            background: transparent;
+        }
+
+        /* The Crown */
+        .crown-icon {
+            position: absolute;
+            top: -10px;
+            right: 0;
+            margin-right: 120px;
+            /* Adjust to match image relative to text */
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 8px rgba(255, 211, 42, 0.4));
+            transform: rotate(15deg);
+            animation: floatCrown 3s ease-in-out infinite;
+        }
+
+        @keyframes floatCrown {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(15deg);
+            }
+
+            50% {
+                transform: translateY(-5px) rotate(20deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="signature-container">
+        <div class="input-group">
+            <span class="sig-label">Digital Signature</span>
+            <div class="crown-icon">👑</div>
+            <input type="text" class="sig-input" value="Daksh Bhavsar" readonly spellcheck="false">
+        </div>
+    </div>
+</body>
+
+</html>
