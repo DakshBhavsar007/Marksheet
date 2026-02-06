@@ -858,46 +858,12 @@
         };
 
         function getStudentModeData(student) {
-            let roll, div;
-            if (currentMode === 'new') {
-                // User Request: "rank should evaluate for overall"
-                // Interpretation: Always show GLOBAL RANK in the Rank column.
-                // But keep Division logic based on DEPT RANK to maintain B1/D1 distribution correctness.
-
-                roll = student.globalRank;
-                const r = student.deptRank;
-
-                // If Overall, we default to actual division since ranking logic for mixed depts is undefined
-                if (currentDept === 'Overall') {
-                    div = student.div;
-                }
-                else if (student.dept === 'SY4') {
-                    if (r <= 35) div = 'D1';
-                    else if (r <= 70) div = 'D2';
-                    else if (r <= 102) div = 'D3';
-                    else if (r <= 134) div = 'D4';
-                    else if (r <= 166) div = 'D5';
-                    else if (r <= 198) div = 'D6';
-                    else if (r <= 226) div = 'D7';
-                    else if (r <= 257) div = 'D8';
-                    else div = 'D9';
-                } else if (student.dept === 'SY2') {
-                    if (r <= 37) div = 'B1';
-                    else if (r <= 74) div = 'B2';
-                    else if (r <= 109) div = 'B3';
-                    else if (r <= 144) div = 'B4';
-                    else if (r <= 177) div = 'B5';
-                    else if (r <= 210) div = 'B6';
-                    else if (r <= 236) div = 'B7';
-                    else div = 'B8';
-                } else {
-                    div = student.div;
-                }
-            } else {
-                roll = student.roll;
-                div = student.div;
-            }
-            return { roll, div };
+            // User Request: "roll no should displaying the classic view one and divisions also displaying the classic view one"
+            // This means we ALWAYS return real roll and real div.
+            return {
+                roll: student.roll,
+                div: student.div
+            };
         }
 
         function updateBranches(dept) {
@@ -973,12 +939,8 @@
             }
 
             if (currentMode === 'new') {
-                // Sort by global or dept rank based on view
-                if (currentDept === 'Overall') {
-                    filteredData.sort((a, b) => a.globalRank - b.globalRank);
-                } else {
-                    filteredData.sort((a, b) => a.deptRank - b.deptRank);
-                }
+                // Sort by global rank (Merit)
+                filteredData.sort((a, b) => a.globalRank - b.globalRank);
             }
             else filteredData.sort((a, b) => a.roll - b.roll);
 
@@ -1002,7 +964,24 @@
                 tr.className = 'fade-in';
                 tr.style.animationDelay = `${idx * 0.01}s`;
 
-                if (s.rank <= 3) tr.classList.add('top-rank');
+                // Calculate which rank to display?
+                // Request: "like for overall rank #1,#2,#3 should be different"
+                // And "rank should evaluate for overall"
+                // Assuming we display GLOBAL RANK always in Rank View.
+                const displayedRank = (currentMode === 'new') ? s.globalRank : s.globalRank;
+                // Wait, Classic view usually doesn't show Rank in firsr column?
+                // The table header says "Rank". 
+                // In Classic View, column 1 is Rank? No, code says:
+                // <td class="cell-rank">#${s.rank}</td>
+                // Let's settle on: New Mode = Global Merit Rank. Classic Mode = Global Merit Rank (or do we hide it?)
+                // Usually Classic View is just sorted by Roll.
+                // Let's use Global Rank for the '#' column in both, but sorted differently?
+                // Or maybe the user wants '#' column to be Rank.
+
+                // Let's use Global Rank for 'displayedRank' if Mode is New.
+                // s.rank property is currently mapped to deptRank.
+
+                if (s.globalRank <= 3 && currentMode === 'new') tr.classList.add('top-rank');
 
                 // Only highlighted rows for SY4 specific rolls
                 if (s.dept === 'SY4') {
@@ -1010,7 +989,7 @@
                 }
 
                 tr.innerHTML = `
-                    <td class="cell-rank">#${s.rank}</td>
+                    <td class="cell-rank">#${currentMode === 'new' ? s.globalRank : s.globalRank}</td>
                     <td style="font-weight:600">${roll}</td>
                     <td>${s.dept || 'SY4'}</td>
                     <td><span style="background:var(--bg-glass-hover); padding:2px 8px; border-radius:4px; font-size:0.85rem">${div}</span></td>
