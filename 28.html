@@ -939,8 +939,12 @@
             }
 
             if (currentMode === 'new') {
-                // Sort by global rank (Merit)
-                filteredData.sort((a, b) => a.globalRank - b.globalRank);
+                // Sort based on view: Overall -> Global Rank, Dept -> Dept Rank
+                if (currentDept === 'Overall') {
+                    filteredData.sort((a, b) => a.globalRank - b.globalRank);
+                } else {
+                    filteredData.sort((a, b) => a.deptRank - b.deptRank);
+                }
             }
             else filteredData.sort((a, b) => a.roll - b.roll);
 
@@ -964,32 +968,20 @@
                 tr.className = 'fade-in';
                 tr.style.animationDelay = `${idx * 0.01}s`;
 
-                // Calculate which rank to display?
-                // Request: "like for overall rank #1,#2,#3 should be different"
-                // And "rank should evaluate for overall"
-                // Assuming we display GLOBAL RANK always in Rank View.
-                const displayedRank = (currentMode === 'new') ? s.globalRank : s.globalRank;
-                // Wait, Classic view usually doesn't show Rank in firsr column?
-                // The table header says "Rank". 
-                // In Classic View, column 1 is Rank? No, code says:
-                // <td class="cell-rank">#${s.rank}</td>
-                // Let's settle on: New Mode = Global Merit Rank. Classic Mode = Global Merit Rank (or do we hide it?)
-                // Usually Classic View is just sorted by Roll.
-                // Let's use Global Rank for the '#' column in both, but sorted differently?
-                // Or maybe the user wants '#' column to be Rank.
+                // Determine Rank to Display
+                // Overall -> Global Rank
+                // Specific Dept -> Dept Rank
+                const displayedRank = (currentDept === 'Overall') ? s.globalRank : s.deptRank;
 
-                // Let's use Global Rank for 'displayedRank' if Mode is New.
-                // s.rank property is currently mapped to deptRank.
+                if (displayedRank <= 3 && currentMode === 'new') tr.classList.add('top-rank');
 
-                if (s.globalRank <= 3 && currentMode === 'new') tr.classList.add('top-rank');
-
-                // Only highlighted rows for SY4 specific rolls
+                // Only highlighted rows for SY4 specific rolls (red highlight request)
                 if (s.dept === 'SY4') {
                     if ([37, 52, 62, 131, 97].includes(s.roll)) tr.classList.add('highlight-row');
                 }
 
                 tr.innerHTML = `
-                    <td class="cell-rank">#${currentMode === 'new' ? s.globalRank : s.globalRank}</td>
+                    <td class="cell-rank">#${displayedRank}</td>
                     <td style="font-weight:600">${roll}</td>
                     <td>${s.dept || 'SY4'}</td>
                     <td><span style="background:var(--bg-glass-hover); padding:2px 8px; border-radius:4px; font-size:0.85rem">${div}</span></td>
