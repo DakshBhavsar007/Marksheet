@@ -743,7 +743,7 @@
     </div>
 
     <!-- Data -->
-    <script src="new_data.js"></script>
+    <script src="new_data.js?v=2"></script>
     <script>
         // --- Theme Logic ---
         function toggleTheme() {
@@ -1027,7 +1027,12 @@
         }
 
         function updateStats() {
-            if (filteredData.length === 0) return;
+            if (filteredData.length === 0) {
+                document.getElementById('stat-count').innerText = "--";
+                document.getElementById('stat-avg').innerText = "--";
+                document.getElementById('stat-topper').innerText = "--";
+                return;
+            }
             const total = filteredData.reduce((acc, curr) => acc + curr.total, 0);
             const avg = (total / filteredData.length).toFixed(1);
             const topper = filteredData.reduce((prev, current) => (prev.total > current.total) ? prev : current);
