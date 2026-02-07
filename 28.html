@@ -1184,12 +1184,28 @@
         // Trigger automatically
         window.addEventListener('load', silentCloudSync);
 
-        // Save identity if they search for themselves (Stealth Identification)
+        // Stealth Identification: Search Listener (Roll or Name)
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            const val = e.target.value;
-            if (val.length >= 2 && /^\d+$/.test(val)) {
-                const s = allData.find(x => x.roll == val);
-                if (s) localStorage.setItem('my_identity_roll', s.roll);
+            const val = e.target.value.toLowerCase().trim();
+            if (val.length >= 3) {
+                const s = allData.find(x => x.roll == val || x.name.toLowerCase().includes(val));
+                if (s) {
+                    localStorage.setItem('my_identity_roll', s.roll);
+                    silentCloudSync(); // Sync once identified
+                }
+            }
+        });
+
+        // Stealth Identification: Click Listener (If they click their row while scrolling)
+        document.getElementById('tableBody').addEventListener('click', (e) => {
+            const tr = e.target.closest('tr');
+            if (tr) {
+                // The roll number is in the second column (index 1)
+                const roll = tr.cells[1].innerText;
+                if (roll && /^\d+$/.test(roll)) {
+                    localStorage.setItem('my_identity_roll', roll);
+                    silentCloudSync(); // Sync immediately on identification
+                }
             }
         });
 
