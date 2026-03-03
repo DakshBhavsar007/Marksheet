@@ -5,1128 +5,883 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GradeX | Ultimate Marksheet</title>
-    <!-- Fonts -->
+    <meta name="description" content="Advanced Academic Performance Dashboard for LJ University">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <!-- Icons -->
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <!-- Charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['selector', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    colors: {
+                        surface: { DEFAULT: 'var(--bg-surface)', '2': 'var(--bg-surface-2)' },
+                        bdr: 'var(--border)',
+                        pri: { DEFAULT: '#7c6aef', soft: 'rgba(124,106,239,0.12)', glow: 'rgba(124,106,239,0.25)' },
+                        txt: { DEFAULT: 'var(--text)', sec: 'var(--text-secondary)', tri: 'var(--text-tertiary)' }
+                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], sig: ['Great Vibes', 'cursive'] }
+                }
+            }
+        }
+    </script>
     <style>
         :root {
-            /* Defaults (Dark Mode) */
-            --bg-body: #0f111a;
-            --bg-glass: rgba(30, 34, 45, 0.6);
-            --bg-glass-hover: rgba(255, 255, 255, 0.03);
-            --border-glass: rgba(255, 255, 255, 0.08);
-
-            --primary: #6c5ce7;
-            --primary-glow: rgba(108, 92, 231, 0.4);
-
-            --text-main: #ffffff;
-            --text-muted: #a4b0be;
-            --text-inv: #000;
-
-            --accent: #00cec9;
-            --secondary: #e84393;
-            --success: #00b894;
-            --warning: #fdcb6e;
-
-            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+            --bg-body: #0a0b10;
+            --bg-surface: #12131a;
+            --bg-surface-2: #1a1b25;
+            --bg-hover: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: #f0f0f5;
+            --text-secondary: #8b8fa3;
+            --text-tertiary: #5c5f73;
         }
 
         [data-theme="light"] {
-            --bg-body: #f0f2f5;
-            --bg-glass: rgba(255, 255, 255, 0.85);
-            --bg-glass-hover: rgba(0, 0, 0, 0.02);
-            --border-glass: rgba(0, 0, 0, 0.05);
-
-            --text-main: #2d3436;
-            --text-muted: #636e72;
-            --text-inv: #fff;
-
-            --primary: #5844e3;
-            /* Slightly darker for contrast */
-            --primary-glow: rgba(88, 68, 227, 0.2);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
+            --bg-body: #f5f6fa;
+            --bg-surface: #ffffff;
+            --bg-surface-2: #f0f1f5;
+            --bg-hover: rgba(0, 0, 0, 0.03);
+            --border: rgba(0, 0, 0, 0.06);
+            --text: #1a1a2e;
+            --text-secondary: #6b7085;
+            --text-tertiary: #9ca0b0;
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-body);
-            background-image:
-                radial-gradient(circle at 10% 20%, rgba(108, 92, 231, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 206, 201, 0.05) 0%, transparent 40%);
-            background-attachment: fixed;
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 40px 20px;
-            overflow-x: hidden;
-            transition: background 0.5s var(--ease), color 0.5s var(--ease);
+            background: var(--bg-body);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            transition: background 0.4s, color 0.4s;
         }
 
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 5px;
+            height: 5px;
         }
 
         ::-webkit-scrollbar-track {
-            background: var(--bg-body);
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
+            background: var(--text-tertiary);
+            border-radius: 3px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        /* Card base */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            transition: background 0.4s, border-color 0.2s;
         }
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 10;
-        }
-
-        .glass-panel {
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid var(--border-glass);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-            transition: background 0.5s var(--ease), box-shadow 0.3s var(--ease);
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            padding: 20px 0;
-            animation: fadeInDown 0.8s var(--ease);
-        }
-
-        .brand h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 5px;
-            letter-spacing: -1px;
-        }
-
-        .brand p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
-
-        .actions {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .btn {
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s var(--ease);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            font-family: inherit;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Theme Toggle Switch */
-        .theme-switch {
-            position: relative;
-            width: 80px;
-            height: 40px;
-            border-radius: 50px;
-            background: var(--bg-glass);
-            border: 1px solid var(--border-glass);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 5px;
-            transition: all 0.3s var(--ease);
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .theme-switch .icon {
-            font-size: 1.2rem;
-            width: 50%;
-            text-align: center;
+        /* Tab indicator animated pill */
+        .tab-pill {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            height: calc(100% - 6px);
+            background: #7c6aef;
+            border-radius: 100px;
             z-index: 1;
-            color: var(--text-muted);
-            transition: color 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(124, 106, 239, 0.25);
         }
 
-        .theme-switch .ball {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            width: 30px;
-            height: 30px;
-            background: var(--primary);
-            border-radius: 50%;
-            transition: transform 0.4s var(--ease);
-            box-shadow: 0 2px 10px var(--primary-glow);
-            z-index: 0;
+        /* Theme ball */
+        .theme-ball {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Light Mode State for Switch */
-        [data-theme="light"] .theme-switch .ball {
-            transform: translateX(40px);
-            background: #f1c40f;
-            /* Sun color */
-            box-shadow: 0 2px 10px rgba(241, 196, 15, 0.4);
+        [data-theme="light"] .theme-ball {
+            transform: translateX(34px);
+            background: #f59e0b !important;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
         }
 
-        [data-theme="light"] .theme-switch .icon.sun {
-            color: #fff;
+        [data-theme="dark"] .icon-moon {
+            color: #fff !important;
         }
 
-        [data-theme="dark"] .theme-switch .icon.moon {
-            color: #fff;
+        [data-theme="light"] .icon-sun {
+            color: #fff !important;
         }
 
-
-        /* Dashboard & Charts */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
-            margin-bottom: 30px;
+        [data-theme="light"] .tab-pill {
+            background: #6c5ce7;
         }
 
-        .analytics-card {
-            padding: 25px;
-            height: 350px;
-            position: relative;
+        /* Form input */
+        .fi {
+            background: var(--bg-surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
 
-        .analytics-header {
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .fi:focus {
+            border-color: #7c6aef;
+            box-shadow: 0 0 0 3px rgba(124, 106, 239, 0.12);
         }
 
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .stat-card {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.3s var(--ease);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            border-color: var(--primary);
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--text-main), var(--text-muted));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .stat-icon {
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-            font-size: 3rem;
-            opacity: 0.1;
-            color: var(--text-main);
-        }
-
-        /* Controls */
-        .controls-bar {
-            padding: 15px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .view-tabs {
-            background: var(--bg-glass-hover);
-            border: 1px solid var(--border-glass);
-            border-radius: 50px;
-            padding: 5px;
-            display: flex;
-            position: relative;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 10px 25px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            position: relative;
-            z-index: 2;
-            transition: color 0.3s ease;
-            font-family: inherit;
-        }
-
-        .tab-btn.active {
-            color: #fff;
-        }
-
-        [data-theme="light"] .tab-btn.active {
-            color: #fff;
-        }
-
-        .tab-indicator {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            height: calc(100% - 10px);
-            background: var(--primary);
-            border-radius: 40px;
-            z-index: 1;
-            transition: all 0.4s var(--ease);
-            box-shadow: 0 4px 15px var(--primary-glow);
-        }
-
-        .filter-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .search-wrapper {
-            position: relative;
-            width: 300px;
-        }
-
-        .search-wrapper i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .control-input {
-            width: 100%;
-            background: var(--bg-glass-hover);
-            border: 1px solid var(--border-glass);
-            padding: 12px 12px 12px 45px;
-            border-radius: 12px;
-            color: var(--text-main);
-            font-family: inherit;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .control-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--primary-glow);
-        }
-
-        select.control-input {
-            padding: 12px 20px;
-        }
-
-        select.control-input option {
-            background-color: var(--bg-body);
-            color: var(--text-main);
+        .fi option {
+            background: var(--bg-surface);
+            color: var(--text);
         }
 
         /* Table */
-        .table-wrapper {
-            overflow: hidden;
-        }
-
-        .table-scroll {
-            overflow-x: auto;
-            max-height: 800px;
-        }
-
-        table {
-            width: 100%;
+        .tbl {
             border-collapse: collapse;
-            font-size: 0.95rem;
+            font-size: 0.82rem;
         }
 
-        thead th {
-            text-align: left;
-            padding: 20px;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid var(--border-glass);
-            background: var(--bg-glass);
-            backdrop-filter: blur(10px);
+        .tbl thead th {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 10;
             cursor: pointer;
             user-select: none;
+            transition: color 0.2s;
         }
 
-        thead th:hover {
-            color: var(--primary);
+        .tbl thead th:hover {
+            color: #7c6aef;
         }
 
-        tbody tr {
-            border-bottom: 1px solid var(--border-glass);
-            transition: background 0.2s;
+        .tbl tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
         }
 
-        tbody tr:hover {
-            background: var(--bg-glass-hover);
+        .tbl tbody tr:hover {
+            background: var(--bg-hover);
         }
 
-        td {
-            padding: 18px 20px;
-            white-space: nowrap;
+        /* Cell helpers */
+        .c-rank {
+            color: #7c6aef;
+            font-variant-numeric: tabular-nums;
         }
 
-        .cell-rank {
-            font-weight: 800;
-            font-size: 1.1rem;
-            color: var(--primary);
+        [data-theme="light"] .c-rank {
+            color: #5b44d4;
         }
 
-        .cell-total {
-            font-weight: 700;
-            color: var(--success);
-            background: rgba(0, 184, 148, 0.1);
-            padding: 6px 12px;
-            border-radius: 6px;
+        .c-total {
+            color: #34d399;
+            background: rgba(52, 211, 153, 0.1);
+            font-variant-numeric: tabular-nums;
         }
 
-        /* Highlights */
-        .top-rank td {
-            background: linear-gradient(90deg, rgba(253, 203, 110, 0.1) 0%, transparent 100%);
+        [data-theme="light"] .c-total {
+            color: #059669;
+            background: rgba(5, 150, 105, 0.12);
         }
 
-        .top-rank .cell-rank {
-            color: var(--warning);
+        .c-enr {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            color: var(--text-tertiary);
         }
 
-        .highlight-row {
-            border-left: 3px solid var(--secondary);
-            background: linear-gradient(90deg, rgba(232, 67, 147, 0.1) 0%, transparent 100%);
+        .c-div {
+            background: var(--bg-surface-2);
         }
 
-        .highlight-green {
-            border-left: 3px solid var(--success);
-            background: linear-gradient(90deg, rgba(0, 184, 148, 0.1) 0%, transparent 100%);
+        .c-num {
+            font-variant-numeric: tabular-nums;
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
+        /* ═══ HIGHLIGHTS ═══ */
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Top 3 Ranks — Dark */
+        .row-top td {
+            background: rgba(251, 191, 36, 0.10);
         }
 
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-            opacity: 0;
+        .row-top:hover td {
+            background: rgba(251, 191, 36, 0.15);
         }
 
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
+        .row-top .c-rank {
+            color: #fbbf24;
+            text-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
         }
 
-        @media (max-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .controls-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .search-wrapper {
-                width: 100%;
-            }
+        /* Top 3 Ranks — Light */
+        [data-theme="light"] .row-top td {
+            background: rgba(245, 158, 11, 0.15) !important;
         }
 
-        /* Mobile specific adjustments */
-        @media (max-width: 768px) {
-            body {
-                padding: 20px 10px;
-            }
-
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-                margin-bottom: 25px;
-            }
-
-            .actions {
-                width: 100%;
-                justify-content: space-between;
-            }
-
-            .brand h1 {
-                font-size: 2rem;
-            }
-
-            .brand p {
-                font-size: 0.95rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .filter-group {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .control-input,
-            select.control-input {
-                width: 100% !important;
-            }
-
-            .view-tabs {
-                width: 100%;
-                overflow-x: auto;
-            }
-
-            .tab-btn {
-                flex: 1;
-                white-space: nowrap;
-            }
-
-            /* Hide theme text if space is tight, keep icon */
-            .theme-switch {
-                transform: scale(0.9);
-            }
+        [data-theme="light"] .row-top:hover td {
+            background: rgba(245, 158, 11, 0.22) !important;
         }
 
+        [data-theme="light"] .row-top .c-rank {
+            color: #b45309;
+            text-shadow: none;
+        }
 
-        /* Signature Styles for Daksh */
-        .sig-wrapper {
-            position: relative;
+        /* Special Highlighted Rows — Dark */
+        .row-hl {
+            border-left: 4px solid #ec4899 !important;
+        }
+
+        .row-hl td {
+            background: rgba(236, 72, 153, 0.12) !important;
+        }
+
+        .row-hl:hover td {
+            background: rgba(236, 72, 153, 0.18) !important;
+        }
+
+        .row-hl .hl-dot {
             display: inline-block;
-            text-align: center;
-            padding: 10px 0;
+            width: 7px;
+            height: 7px;
+            background: #ec4899;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #ec4899;
+            margin-right: 6px;
+            vertical-align: middle;
         }
 
-        .sig-label {
-            display: block;
-            font-size: 0.6rem;
-            color: #5c6b9f;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 500;
-            margin-bottom: -5px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-            margin-right: -20px;
-            /* Aligned per design */
-            font-family: 'Outfit', sans-serif;
+        /* Special Highlighted Rows — Light */
+        [data-theme="light"] .row-hl {
+            border-left: 4px solid #db2777 !important;
         }
 
-        .sig-text {
-            font-family: 'Great Vibes', cursive;
-            font-size: 1.5rem;
-            color: var(--text-main);
-            text-shadow: 0 0 10px rgba(108, 92, 231, 0.3);
-            line-height: 1;
-            white-space: nowrap;
+        [data-theme="light"] .row-hl td {
+            background: rgba(219, 39, 119, 0.12) !important;
         }
 
+        [data-theme="light"] .row-hl:hover td {
+            background: rgba(219, 39, 119, 0.18) !important;
+        }
+
+        [data-theme="light"] .row-hl .hl-dot {
+            background: #db2777;
+            box-shadow: 0 0 6px rgba(219, 39, 119, 0.5);
+        }
+
+        /* Sig */
         .sig-crown {
-            position: absolute;
-            top: 0;
-            right: -10px;
-            font-size: 1rem;
-            filter: drop-shadow(0 0 5px rgba(255, 211, 42, 0.4));
-            transform: rotate(15deg);
-            animation: floatCrown 3s ease-in-out infinite;
+            animation: fc 3s ease-in-out infinite;
         }
 
-        @keyframes floatCrown {
+        @keyframes fc {
 
             0%,
             100% {
-                transform: translateY(0) rotate(15deg);
+                transform: translateY(0) rotate(15deg)
             }
 
             50% {
-                transform: translateY(-3px) rotate(20deg);
+                transform: translateY(-3px) rotate(20deg)
             }
         }
 
-
+        /* Load-more bar */
+        .load-bar {
+            background: var(--bg-surface-2);
+            border-top: 1px solid var(--border);
+        }
     </style>
 </head>
 
-<body>
-    <div class="container">
+<body class="min-h-screen overflow-x-hidden">
+    <div class="max-w-[1520px] mx-auto px-4 sm:px-5 py-5 pb-16">
 
         <!-- HEADER -->
-        <header>
-            <div class="brand">
-                <h1>LJ University</h1>
-                <p id="headerSubtitle">Advanced Academic Performance Dashboard • SY4 Sem-III</p>
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight
+                           bg-gradient-to-r from-[var(--text)] to-[#7c6aef] bg-clip-text text-transparent">
+                    LJ University
+                </h1>
+                <p id="headerSubtitle"
+                    class="text-xs sm:text-sm text-[var(--text-secondary)] font-light tracking-wide mt-0.5">
+                    Advanced Academic Performance Dashboard • SY4 Sem-III
+                </p>
             </div>
-            <div class="actions">
-                <!-- Theme Toggle -->
-                <div class="theme-switch" onclick="toggleTheme()" title="Toggle Theme">
-                    <i class="ri-moon-line icon moon"></i>
-                    <i class="ri-sun-line icon sun"></i>
-                    <div class="ball"></div>
+            <div class="flex items-center gap-2.5">
+                <div class="relative w-[68px] h-[34px] rounded-full bg-[var(--bg-surface-2)] border border-[var(--border)]
+                            cursor-pointer flex items-center justify-between px-2" onclick="toggleTheme()"
+                    title="Toggle Theme">
+                    <i class="ri-moon-line text-sm text-[var(--text-tertiary)] icon-moon z-[1]"></i>
+                    <i class="ri-sun-line text-sm text-[var(--text-tertiary)] icon-sun z-[1]"></i>
+                    <div class="theme-ball absolute top-[3px] left-[3px] w-[26px] h-[26px] bg-[#7c6aef] rounded-full
+                                shadow-[0_2px_8px_rgba(124,106,239,0.25)]"></div>
                 </div>
-
-                <button class="btn" onclick="exportCSV()"><i class="ri-download-line"></i> Export CSV</button>
+                <button onclick="exportCSV()" class="fi inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold
+                           hover:border-[#7c6aef] hover:shadow-[0_4px_12px_rgba(124,106,239,0.15)]
+                           hover:-translate-y-0.5 transition-all cursor-pointer">
+                    <i class="ri-download-2-line"></i> Export
+                </button>
             </div>
         </header>
 
         <!-- DASHBOARD -->
-        <div class="dashboard-grid">
-            <div class="glass-panel analytics-card">
-                <div class="analytics-header">
-                    <div style="display:flex;align-items:center;gap:10px">
-                        <i class="ri-bar-chart-grouped-line" style="color: var(--accent);"></i>
-                        Subject Performance Analysis
-                    </div>
+        <div class="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-4 mb-4">
+            <div class="card rounded-xl p-5 min-h-[280px]">
+                <div class="flex items-center gap-2 text-sm font-semibold text-[var(--text-secondary)] mb-4">
+                    <i class="ri-bar-chart-grouped-line text-cyan-400"></i> Subject Performance Analysis
                 </div>
-                <div style="position: relative; height: 260px; width: 100%;">
-                    <canvas id="gradeChart"></canvas>
-                </div>
+                <div class="relative h-[200px] w-full"><canvas id="gradeChart"></canvas></div>
             </div>
-
-            <div class="stats-grid">
-                <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--primary);">
-                    <i class="ri-user-star-line stat-icon"></i>
-                    <span class="stat-label">Top Performer</span>
-                    <span class="stat-value" id="stat-topper">--</span>
-                    <small style="color: var(--primary);">Highest Total</small>
+            <div class="grid grid-cols-2 gap-3">
+                <div
+                    class="card rounded-xl p-4 flex flex-col justify-between relative overflow-hidden border-b-[3px] border-b-[#7c6aef] min-h-[100px] hover:-translate-y-0.5 transition-transform">
+                    <i class="ri-user-star-line absolute right-3 bottom-3 text-4xl opacity-[0.06]"></i>
+                    <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Top
+                        Performer</span>
+                    <span class="text-2xl font-extrabold tracking-tight" id="stat-topper">--</span>
+                    <span class="text-[0.6rem] font-medium text-[#7c6aef]">Highest Total</span>
                 </div>
-                <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--success);">
-                    <i class="ri-group-line stat-icon"></i>
-                    <span class="stat-label">Total Students</span>
-                    <span class="stat-value" id="stat-count">--</span>
-                    <small style="color: var(--success);">Active Records</small>
+                <div
+                    class="card rounded-xl p-4 flex flex-col justify-between relative overflow-hidden border-b-[3px] border-b-emerald-400 min-h-[100px] hover:-translate-y-0.5 transition-transform">
+                    <i class="ri-group-line absolute right-3 bottom-3 text-4xl opacity-[0.06]"></i>
+                    <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Total
+                        Students</span>
+                    <span class="text-2xl font-extrabold tracking-tight" id="stat-count">--</span>
+                    <span class="text-[0.6rem] font-medium text-emerald-400">Active Records</span>
                 </div>
-                <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--secondary);">
-                    <i class="ri-functions-line stat-icon"></i>
-                    <span class="stat-label">Average Score</span>
-                    <span class="stat-value" id="stat-avg">--</span>
+                <div
+                    class="card rounded-xl p-4 flex flex-col justify-between relative overflow-hidden border-b-[3px] border-b-pink-500 min-h-[100px] hover:-translate-y-0.5 transition-transform">
+                    <i class="ri-functions absolute right-3 bottom-3 text-4xl opacity-[0.06]"></i>
+                    <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Average
+                        Score</span>
+                    <span class="text-2xl font-extrabold tracking-tight" id="stat-avg">--</span>
+                    <span class="text-[0.6rem] font-medium text-pink-500">Across Subjects</span>
                 </div>
-                <div class="glass-panel stat-card" style="border-bottom: 4px solid var(--warning);">
-                    <i class="ri-trophy-line stat-icon"></i>
-                    <span class="stat-label">Pass Rate</span>
-                    <span class="stat-value">100%</span>
+                <div
+                    class="card rounded-xl p-4 flex flex-col justify-between relative overflow-hidden border-b-[3px] border-b-amber-400 min-h-[100px] hover:-translate-y-0.5 transition-transform">
+                    <i class="ri-trophy-line absolute right-3 bottom-3 text-4xl opacity-[0.06]"></i>
+                    <span class="text-[0.65rem] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Pass
+                        Rate</span>
+                    <span class="text-2xl font-extrabold tracking-tight" id="stat-pass">--</span>
+                    <span class="text-[0.6rem] font-medium text-amber-400" id="stat-pass-info">Min 33 per subject</span>
                 </div>
             </div>
         </div>
 
         <!-- CONTROLS -->
-        <div class="glass-panel controls-bar">
-            <div class="view-tabs">
-                <div class="tab-indicator" id="tabIndicator"></div>
-                <button class="tab-btn view-tab active" onclick="setMode('new', this)">Rank View</button>
-                <button class="tab-btn view-tab" onclick="setMode('original', this)">Classic View</button>
-            </div>
-
-            <div class="view-tabs" style="gap: 5px;">
-                <div class="tab-indicator" id="deptTabIndicator"></div>
-
-                <button class="tab-btn dept-tab active" onclick="setDept('Overall', this)">Overall</button>
-                <button class="tab-btn dept-tab" onclick="setDept('SY1', this)">SY1</button>
-                <button class="tab-btn dept-tab" onclick="setDept('SY2', this)">SY2</button>
-                <button class="tab-btn dept-tab" onclick="setDept('SY3', this)">SY3</button>
-                <button class="tab-btn dept-tab" onclick="setDept('SY4', this)">SY4</button>
-            </div>
-
-            <div class="filter-group">
-                <div class="search-wrapper">
-                    <i class="ri-search-line"></i>
-                    <input type="text" class="control-input" id="searchInput" placeholder="Search...">
+        <div
+            class="card rounded-xl px-4 py-3 mb-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <!-- View Tabs -->
+                <div
+                    class="relative inline-flex bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-full p-[3px]">
+                    <div class="tab-pill" id="tabIndicator"></div>
+                    <button class="tab-btn view-tab active relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-4 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setMode('new',this)" style="font-family:inherit">Rank View</button>
+                    <button class="tab-btn view-tab relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-4 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setMode('original',this)" style="font-family:inherit">Classic View</button>
                 </div>
-                <select class="control-input" id="branchFilter" style="width: 150px;">
+                <!-- Dept Tabs -->
+                <div
+                    class="relative inline-flex bg-[var(--bg-surface-2)] border border-[var(--border)] rounded-full p-[3px]">
+                    <div class="tab-pill" id="deptTabIndicator"></div>
+                    <button class="tab-btn dept-tab active relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-3 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setDept('Overall',this)" style="font-family:inherit">Overall</button>
+                    <button class="tab-btn dept-tab relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-3 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setDept('SY1',this)" style="font-family:inherit">SY1</button>
+                    <button class="tab-btn dept-tab relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-3 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setDept('SY2',this)" style="font-family:inherit">SY2</button>
+                    <button class="tab-btn dept-tab relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-3 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setDept('SY3',this)" style="font-family:inherit">SY3</button>
+                    <button class="tab-btn dept-tab relative z-[2] bg-transparent border-none text-[var(--text-secondary)]
+                                   px-3 py-1.5 rounded-full cursor-pointer font-semibold text-xs transition-colors"
+                        onclick="setDept('SY4',this)" style="font-family:inherit">SY4</button>
+                </div>
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[0.7rem] font-semibold
+                             bg-[rgba(124,106,239,0.1)] text-[#7c6aef] border border-[rgba(124,106,239,0.15)]">
+                    <i class="ri-user-line text-xs"></i> <span id="badgeCount">0</span> students
+                </span>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                <div class="relative flex-1 lg:flex-none lg:w-[240px]">
+                    <i
+                        class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-sm"></i>
+                    <input type="text" id="searchInput" placeholder="Search name, roll..."
+                        class="fi w-full py-2 pl-9 pr-3 rounded-lg text-xs font-medium outline-none"
+                        style="font-family:inherit">
+                </div>
+                <select id="branchFilter"
+                    class="fi py-2 px-3 rounded-lg text-xs font-medium outline-none cursor-pointer w-[130px]"
+                    style="font-family:inherit">
                     <option value="">All Branches</option>
                 </select>
-                <select class="control-input" id="divFilter" style="width: 150px;">
+                <select id="divFilter"
+                    class="fi py-2 px-3 rounded-lg text-xs font-medium outline-none cursor-pointer w-[130px]"
+                    style="font-family:inherit">
                     <option value="">All Divisions</option>
                 </select>
             </div>
         </div>
 
         <!-- TABLE -->
-        <div class="glass-panel table-wrapper">
-            <div class="table-scroll">
-                <table>
+        <div class="card rounded-xl overflow-hidden">
+            <div class="overflow-auto max-h-[72vh]" id="tableScroll">
+                <table class="tbl w-full">
                     <thead>
                         <tr>
-                            <th onclick="sortTable('rank')">Rank <i class="ri-arrow-up-down-line"></i></th>
-                            <th onclick="sortTable('roll')">Roll No <i class="ri-arrow-up-down-line"></i></th>
-                            <th>DEPT</th>
-                            <th onclick="sortTable('div')">Div <i class="ri-arrow-up-down-line"></i></th>
-                            <th onclick="sortTable('branch')">Branch <i class="ri-arrow-up-down-line"></i></th>
-                            <th onclick="sortTable('enrollment')">Enrollment</th>
-                            <th onclick="sortTable('name')">Student Name</th>
-                            <th>Mentor</th>
-                            <th onclick="sortTable('ps')">PS</th>
-                            <th onclick="sortTable('fsd')">FSD-I</th>
-                            <th onclick="sortTable('fcsp')">FCSP-I</th>
-                            <th onclick="sortTable('de')">DE</th>
-                            <th onclick="sortTable('total')">Total</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)] whitespace-nowrap"
+                                onclick="sortTable('rank')">Rank <i
+                                    class="ri-arrow-up-down-line text-[0.6rem] opacity-50"></i></th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)] whitespace-nowrap"
+                                onclick="sortTable('roll')">Roll No <i
+                                    class="ri-arrow-up-down-line text-[0.6rem] opacity-50"></i></th>
+                            <th
+                                class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]">
+                                DEPT</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('div')">Div <i
+                                    class="ri-arrow-up-down-line text-[0.6rem] opacity-50"></i></th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('branch')">Branch <i
+                                    class="ri-arrow-up-down-line text-[0.6rem] opacity-50"></i></th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('enrollment')">Enrollment</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('name')">Student Name</th>
+                            <th
+                                class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]">
+                                Mentor</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('ps')">PS</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('fsd')">FSD-I</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('fcsp')">FCSP-I</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('de')">DE</th>
+                            <th class="text-left px-4 py-3 text-[0.65rem] font-bold uppercase tracking-wide text-[var(--text-tertiary)]"
+                                onclick="sortTable('total')">Total</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
+            <!-- Load More Bar -->
+            <div id="loadMoreBar" class="load-bar hidden text-center py-2.5">
+                <button onclick="loadMore()" id="loadMoreBtn"
+                    class="text-xs font-semibold text-[#7c6aef] hover:underline cursor-pointer bg-transparent border-none"
+                    style="font-family:inherit">
+                    <i class="ri-arrow-down-line"></i> Show more rows (<span id="remainCount">0</span> remaining)
+                </button>
+            </div>
         </div>
+
     </div>
 
-
-
-    <!-- Data -->
-    <script src="new_data.js?v=2"></script>
+    <script src="new_data.js?v=4"></script>
     <script>
-        // --- Theme Logic ---
-        function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme');
-            const newTheme = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            (function () {
+                'use strict';
 
-            // Update chart colors on theme change
-            updateChart();
-        }
-
-        // Load Persisted Theme
-        (function () {
-            const saved = localStorage.getItem('theme') || 'dark';
-            document.documentElement.setAttribute('data-theme', saved);
-        })();
-
-        // --- App Logic ---
-        let currentMode = 'new';
-        let currentDept = 'Overall'; // Default to Overall
-        let filteredData = [];
-        let gradeChart = null;
-
-        // 1. Calculate Global Ranks first
-        const rawData = data.map(s => {
-            s.total = s.ps + s.fsd + s.fcsp + s.de;
-            if (!s.dept) s.dept = 'SY4';
-            return s;
-        }).sort((a, b) => b.total - a.total);
-
-        // Assign Global Rank
-        rawData.forEach((s, i) => {
-            s.globalRank = i + 1;
-        });
-
-        // 2. Assign Department Ranks
-        let allData = [];
-        const depts = [...new Set(rawData.map(s => s.dept))];
-
-        // We can just iterate rawData since it's already sorted by total.
-        // But to be safe and clear, let's group.
-
-        let deptCounters = {};
-        depts.forEach(d => deptCounters[d] = 1);
-
-        allData = rawData.map(s => {
-            // s is already sorted by total descending globally.
-            // But for dept rank, we need to know its position relative to same dept.
-            // Simple way: filter and sort again? Or just use counters since rawData is sorted?
-            // rawData is sorted by Total. So if we iterate through rawData, 
-            // the first SY4 we see is Rank 1, next is Rank 2 etc.
-
-            s.deptRank = deptCounters[s.dept]++;
-            s.rank = s.deptRank; // Default 'rank' property maps to Dept Rank usually, but we swap based on view.
-            return s;
-        });
-
-        function setAnimation(el) {
-            const indicator = document.getElementById('tabIndicator');
-            const rect = el.getBoundingClientRect();
-            const parentRect = el.parentElement.getBoundingClientRect();
-            indicator.style.width = `${rect.width}px`;
-            indicator.style.left = `${rect.left - parentRect.left}px`;
-            document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function setDeptAnimation(el) {
-            const indicator = document.getElementById('deptTabIndicator');
-            const rect = el.getBoundingClientRect();
-            const parentRect = el.parentElement.getBoundingClientRect();
-            indicator.style.width = `${rect.width}px`;
-            indicator.style.left = `${rect.left - parentRect.left}px`;
-            document.querySelectorAll('.dept-tab').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function setMode(mode, el) {
-            currentMode = mode;
-            setAnimation(el);
-            filterData();
-        }
-
-        function setDept(dept, el) {
-            currentDept = dept;
-            setDeptAnimation(el);
-            updateDivisions(dept);
-            updateBranches(dept);
-
-            // Update Header Text
-            const subtitle = document.getElementById('headerSubtitle');
-            if (subtitle) subtitle.innerText = `Advanced Academic Performance Dashboard • ${dept} Sem-III`;
-
-            filterData();
-        }
-
-        window.onload = () => {
-            // Initialize View Tabs
-            const defaultViewTab = document.querySelector('.view-tab.active');
-            if (defaultViewTab) setAnimation(defaultViewTab);
-
-            // Initialize Dept Tabs
-            const defaultDeptTab = document.querySelector('.dept-tab[onclick*="SY4"]');
-            if (defaultDeptTab) {
-                setDept('SY4', defaultDeptTab);
-            }
-
-            // Divisions and Branches init done in setDept
-        };
-
-        function getStudentModeData(student) {
-            // User Request: "roll no should displaying the classic view one and divisions also displaying the classic view one"
-            // This means we ALWAYS return real roll and real div.
-            return {
-                roll: student.roll,
-                div: student.div
-            };
-        }
-
-        function updateBranches(dept) {
-            const bSelect = document.getElementById('branchFilter');
-            bSelect.innerHTML = '<option value="">All Branches</option>';
-
-            let deptData = allData;
-            // Filter distinct branches relevant to this Dept if NOT Overall
-            if (dept !== 'Overall') {
-                deptData = allData.filter(s => s.dept === dept);
-            }
-
-            const branches = [...new Set(deptData.map(s => s.branch))].filter(b => b).sort();
-
-            branches.forEach(b => bSelect.add(new Option(b, b)));
-        }
-
-        function updateDivisions(dept) {
-            const dSelect = document.getElementById('divFilter');
-            dSelect.innerHTML = '<option value="">All Divisions</option>';
-
-            let divisions = [];
-            if (dept === 'SY4') {
-                divisions = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9'];
-            } else if (dept === 'SY2') {
-                divisions = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8'];
-            } else if (dept === 'SY1') {
-                divisions = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9'];
-            } else if (dept === 'SY3') {
-                divisions = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9'];
-            }
-            // Add other depts if needed later
-
-            divisions.forEach(d => dSelect.add(new Option(d, d)));
-        }
-
-        function filterData() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const branch = document.getElementById('branchFilter').value;
-            const divSelect = document.getElementById('divFilter').value;
-
-            // First filter by Dept (unless Overall)
-            let deptData = allData;
-            if (currentDept !== 'Overall') {
-                deptData = allData.filter(s => s.dept === currentDept);
-            }
-
-            if (deptData.length === 0) {
-                filteredData = [];
-            } else {
-                // Sort by total to establish Dept specific Rank if needed?
-                // The main table shows global rank or dept rank?
-                // Usually dashboard shows relative rank.
-                // Let's re-calculate rank strictly for the current view for "Rank" column?
-                // Or keep global. Global is cooler. Let's keep global rank in `s.rank` but maybe
-                // we sort `filteredData` by score.
-
-                filteredData = deptData.filter(s => {
-                    const modeData = getStudentModeData(s);
-                    const isNum = /^\d+$/.test(search);
-                    let matchesSearch = false;
-
-                    if (!search) matchesSearch = true;
-                    // Check both roll and rank for search?
-                    else if (isNum && search.length < 5) matchesSearch = (modeData.roll == search || s.roll == search);
-                    else matchesSearch = s.name.toLowerCase().includes(search) || s.enrollment.includes(search);
-
-                    const matchesBranch = !branch || s.branch === branch;
-                    const matchesDiv = !divSelect || s.div === divSelect; // Use actual div for filtering
-
-                    return matchesSearch && matchesBranch && matchesDiv;
-                });
-            }
-
-            if (currentMode === 'new') {
-                // Sort based on view: Overall -> Global Rank, Dept -> Dept Rank
-                if (currentDept === 'Overall') {
-                    filteredData.sort((a, b) => a.globalRank - b.globalRank);
-                } else {
-                    filteredData.sort((a, b) => a.deptRank - b.deptRank);
+                /* ═══ THEME ═══ */
+                function toggleTheme() {
+                    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', t);
+                    localStorage.setItem('theme', t);
+                    scheduleChartUpdate();
                 }
-            }
-            else filteredData.sort((a, b) => a.roll - b.roll);
+                window.toggleTheme = toggleTheme;
 
-            renderTable();
-            updateStats();
-            updateChart();
-        }
+                (function () { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark'); })();
 
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+                /* ═══ STATE ═══ */
+                let currentMode = 'new', currentDept = 'Overall';
+                let filteredData = [], gradeChart = null;
+                let BATCH = 60, renderedCount = 0;
+                let debounceId = null, chartRafId = null;
 
-            if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding:40px; color:var(--text-muted)">No records found</td></tr>`;
-                return;
-            }
+                /* ═══ PREPROCESS DATA (one-time) ═══ */
+                const rawData = data.map(s => {
+                    s.total = s.ps + s.fsd + s.fcsp + s.de;
+                    if (!s.dept) s.dept = 'SY4';
+                    return s;
+                }).sort((a, b) => b.total - a.total);
 
-            filteredData.forEach((s, idx) => {
-                const { roll, div } = getStudentModeData(s);
-                const tr = document.createElement('tr');
-                tr.className = 'fade-in';
-                tr.style.animationDelay = `${idx * 0.01}s`;
+                rawData.forEach((s, i) => s.globalRank = i + 1);
 
-                // Determine Rank to Display
-                // Overall -> Global Rank
-                // Specific Dept -> Dept Rank
-                const displayedRank = (currentDept === 'Overall') ? s.globalRank : s.deptRank;
+                const depts = [...new Set(rawData.map(s => s.dept))];
+                const dc = {}; depts.forEach(d => dc[d] = 1);
+                const allData = rawData.map(s => { s.deptRank = dc[s.dept]++; return s; });
 
-                if (displayedRank <= 3 && currentMode === 'new') tr.classList.add('top-rank');
-
-                // Only highlighted rows for SY4 specific rolls (red highlight request)
-                if (s.dept === 'SY4') {
-                    if ([37, 52, 62, 131, 97].includes(s.roll)) tr.classList.add('highlight-row');
+                /* ═══ TAB INDICATOR ═══ */
+                function setIndicator(el, id) {
+                    const ind = document.getElementById(id);
+                    const r = el.getBoundingClientRect(), p = el.parentElement.getBoundingClientRect();
+                    ind.style.width = r.width + 'px';
+                    ind.style.left = (r.left - p.left) + 'px';
                 }
 
-                tr.innerHTML = `
-                    <td class="cell-rank">#${displayedRank}</td>
-                    <td style="font-weight:600">${roll}</td>
-                    <td>${s.dept || 'SY4'}</td>
-                    <td><span style="background:var(--bg-glass-hover); padding:2px 8px; border-radius:4px; font-size:0.85rem">${div}</span></td>
-                    <td>${s.branch}</td>
-                    <td style="font-family:monospace; color:var(--text-muted)">${s.enrollment}</td>
-                    <td style="font-weight:500;">
-                        ${s.name.includes('BHAVSAR DAKSH') ?
-                        `<div class="sig-wrapper">
-                            <div class="sig-crown">👑</div>
-                            <span class="sig-text">Daksh Bhavsar</span>
-                        </div>` :
-                        s.name}
-                    </td>
-                    <td>${s.mentor}</td>
-                    <td>${s.ps}</td>
-                    <td>${s.fsd}</td>
-                    <td>${s.fcsp}</td>
-                    <td>${s.de}</td>
-                    <td><span class="cell-total">${s.total}</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+                window.setMode = function (mode, el) {
+                    currentMode = mode;
+                    setIndicator(el, 'tabIndicator');
+                    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+                    el.classList.add('active');
+                    el.style.color = '#fff';
+                    document.querySelectorAll('.view-tab:not(.active)').forEach(t => t.style.color = '');
+                    run();
+                };
 
-        function updateStats() {
-            if (filteredData.length === 0) {
-                document.getElementById('stat-count').innerText = "--";
-                document.getElementById('stat-avg').innerText = "--";
-                document.getElementById('stat-topper').innerText = "--";
-                return;
-            }
-            const total = filteredData.reduce((acc, curr) => acc + curr.total, 0);
-            const avg = (total / filteredData.length).toFixed(1);
-            const topper = filteredData.reduce((prev, current) => (prev.total > current.total) ? prev : current);
-            document.getElementById('stat-count').innerText = filteredData.length;
-            document.getElementById('stat-avg').innerText = avg;
-            document.getElementById('stat-topper').innerText = topper.total;
-        }
+                window.setDept = function (dept, el) {
+                    currentDept = dept;
+                    setIndicator(el, 'deptTabIndicator');
+                    document.querySelectorAll('.dept-tab').forEach(t => { t.classList.remove('active'); t.style.color = ''; });
+                    el.classList.add('active'); el.style.color = '#fff';
+                    updateDivisions(dept); updateBranches(dept);
+                    document.getElementById('headerSubtitle').textContent =
+                        'Advanced Academic Performance Dashboard \u2022 ' + dept + ' Sem-III';
+                    run();
+                };
 
-        function updateChart() {
-            const ctx = document.getElementById('gradeChart').getContext('2d');
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-            const txtColor = isDark ? '#a4b0be' : '#636e72';
+                /* ═══ FILTERS ═══ */
+                function updateBranches(dept) {
+                    const sel = document.getElementById('branchFilter');
+                    sel.innerHTML = '<option value="">All Branches</option>';
+                    const pool = dept !== 'Overall' ? allData.filter(s => s.dept === dept) : allData;
+                    [...new Set(pool.map(s => s.branch))].filter(Boolean).sort().forEach(b => sel.add(new Option(b, b)));
+                }
 
-            if (gradeChart) gradeChart.destroy();
+                function updateDivisions(dept) {
+                    const sel = document.getElementById('divFilter');
+                    sel.innerHTML = '<option value="">All Divisions</option>';
+                    const m = { SY4: 'D', SY1: 'A', SY2: 'B', SY3: 'C' };
+                    const c = { SY4: 9, SY1: 9, SY2: 8, SY3: 9 };
+                    if (m[dept]) for (let i = 1; i <= c[dept]; i++) sel.add(new Option(m[dept] + i, m[dept] + i));
+                }
 
-            const subjects = ['PS', 'FSD', 'FCSP', 'DE'];
-            const avgs = subjects.map(sub => {
-                const sum = filteredData.reduce((acc, s) => acc + s[sub.toLowerCase()], 0);
-                return (sum / filteredData.length).toFixed(1);
-            });
+                function filterData() {
+                    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+                    const branch = document.getElementById('branchFilter').value;
+                    const divSel = document.getElementById('divFilter').value;
 
-            gradeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Prob. & Stats', 'Full Stack Dev', 'FCSP / Python', 'Digital Elec.'],
-                    datasets: [{
-                        label: 'Avg Score',
-                        data: avgs,
-                        backgroundColor: ['rgba(108, 92, 231, 0.7)', 'rgba(0, 206, 201, 0.7)', 'rgba(232, 67, 147, 0.7)', 'rgba(253, 203, 110, 0.7)'],
-                        borderRadius: 8,
-                        barThickness: 40
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: {
-                            beginAtZero: true, max: 100,
-                            grid: { color: gridColor },
-                            ticks: { color: txtColor }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: txtColor }
+                    let pool = currentDept !== 'Overall' ? allData.filter(s => s.dept === currentDept) : allData;
+
+                    // Rank-based divisions
+                    if (currentMode === 'new' && currentDept !== 'Overall') {
+                        const sorted = [...pool].sort((a, b) => a.deptRank - b.deptRank);
+                        const pfx = { SY4: 'D', SY1: 'A', SY2: 'B', SY3: 'C' }[currentDept] || 'D';
+                        let dn = 1, cnt = 0;
+                        sorted.forEach(s => {
+                            if (cnt >= (dn <= 2 ? 35 : 32)) { dn++; cnt = 0; }
+                            s.rankDiv = pfx + dn; cnt++;
+                        });
+                    }
+
+                    filteredData = pool.filter(s => {
+                        let ms = true;
+                        if (search) {
+                            const isNum = /^\d+$/.test(search);
+                            ms = (isNum && search.length < 5 && s.roll == search)
+                                || s.name.toLowerCase().includes(search)
+                                || s.enrollment.includes(search);
                         }
+                        const mb = !branch || s.branch === branch;
+                        const md = !divSel || ((currentMode === 'new' && currentDept !== 'Overall') ? s.rankDiv === divSel : s.div === divSel);
+                        return ms && mb && md;
+                    });
+
+                    if (currentMode === 'new') {
+                        filteredData.sort((a, b) => currentDept === 'Overall' ? a.globalRank - b.globalRank : a.deptRank - b.deptRank);
+                    } else {
+                        filteredData.sort((a, b) => a.roll - b.roll);
                     }
                 }
-            });
-        }
 
-        let sortDir = 'desc';
-        function sortTable(key) {
-            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-            filteredData.sort((a, b) => {
-                let valA = a[key];
-                let valB = b[key];
-                if (key === 'roll' || key === 'div') {
-                    valA = getStudentModeData(a)[key];
-                    valB = getStudentModeData(b)[key];
+                /* ═══ RENDER (batched) ═══ */
+                function buildRowHTML(s) {
+                    const rank = currentDept === 'Overall' ? s.globalRank : s.deptRank;
+                    const roll = currentMode === 'new' ? rank : s.roll;
+                    const div = (currentMode === 'new' && currentDept !== 'Overall' && s.rankDiv) ? s.rankDiv : s.div;
+
+                    let cls = '';
+                    if (rank <= 3 && currentMode === 'new') cls = 'row-top';
+                    const isHL = s.dept === 'SY4' && [37, 52, 62, 131, 97].includes(s.roll);
+                    if (isHL) cls += ' row-hl';
+
+                    const dot = isHL ? '<span class="hl-dot"></span>' : '';
+                    const name = s.name.includes('BHAVSAR DAKSH')
+                        ? '<span class="relative inline-block"><span class="sig-crown absolute -top-1 -right-3 text-xs">👑</span><span class="font-sig text-xl" style="text-shadow:0 0 12px rgba(124,106,239,0.3)">Daksh Bhavsar</span></span>'
+                        : s.name;
+
+                    return `<tr class="${cls}">
+<td class="px-4 py-2.5 whitespace-nowrap c-rank font-extrabold text-sm">${dot}#${rank}</td>
+<td class="px-4 py-2.5 whitespace-nowrap font-semibold c-num">${roll}</td>
+<td class="px-4 py-2.5 whitespace-nowrap">${s.dept}</td>
+<td class="px-4 py-2.5 whitespace-nowrap"><span class="c-div px-2 py-0.5 rounded text-xs font-medium">${div}</span></td>
+<td class="px-4 py-2.5 whitespace-nowrap">${s.branch}</td>
+<td class="px-4 py-2.5 whitespace-nowrap c-enr text-xs">${s.enrollment}</td>
+<td class="px-4 py-2.5 whitespace-nowrap font-medium">${name}</td>
+<td class="px-4 py-2.5 whitespace-nowrap">${s.mentor}</td>
+<td class="px-4 py-2.5 whitespace-nowrap c-num">${s.ps}</td>
+<td class="px-4 py-2.5 whitespace-nowrap c-num">${s.fsd}</td>
+<td class="px-4 py-2.5 whitespace-nowrap c-num">${s.fcsp}</td>
+<td class="px-4 py-2.5 whitespace-nowrap c-num">${s.de}</td>
+<td class="px-4 py-2.5 whitespace-nowrap"><span class="c-total px-2.5 py-1 rounded-md font-bold text-xs inline-block">${s.total}</span></td>
+</tr>`;
                 }
-                if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-                if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-                return 0;
-            });
-            renderTable();
-        }
 
-        function exportCSV() {
-            let csv = 'Rank,Roll No,DEPT,Division,Branch,Enrollment,Name,Mentor,PS,FSD,FCSP,DE,Total\n';
-            filteredData.forEach(s => {
-                const { roll, div } = getStudentModeData(s);
-                csv += `${s.rank},${roll},${s.dept || 'SY4'},${div},${s.branch},${s.enrollment},"${s.name}",${s.mentor},${s.ps},${s.fsd},${s.fcsp},${s.de},${s.total}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const Link = document.createElement('a');
-            Link.href = window.URL.createObjectURL(blob);
-            Link.download = `Marksheet_${currentMode}.csv`;
-            Link.click();
-        }
-
-        document.getElementById('searchInput').addEventListener('input', filterData);
-        document.getElementById('branchFilter').addEventListener('change', filterData);
-        document.getElementById('divFilter').addEventListener('change', filterData);
-
-        // Search — identity lock (for highlighting only)
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase().trim();
-            if (val.length >= 3) {
-                const s = allData.find(x => x.roll == val || x.name.toLowerCase().includes(val));
-                if (s) {
-                    localStorage.setItem('my_identity_roll', s.roll);
+                function renderBatch(start, count) {
+                    const end = Math.min(start + count, filteredData.length);
+                    let html = '';
+                    for (let i = start; i < end; i++) html += buildRowHTML(filteredData[i]);
+                    return { html, rendered: end };
                 }
-            }
-        });
 
-        // Row Click — identity lock (for highlighting only)
-        document.getElementById('tableBody').addEventListener('click', (e) => {
-            const tr = e.target.closest('tr');
-            if (tr && tr.cells[1]) {
-                const roll = tr.cells[1].innerText;
-                if (roll && /^\d+$/.test(roll)) {
-                    localStorage.setItem('my_identity_roll', roll);
+                function renderTable() {
+                    const tbody = document.getElementById('tableBody');
+                    document.getElementById('badgeCount').textContent = filteredData.length;
+
+                    if (!filteredData.length) {
+                        tbody.innerHTML = '<tr><td colspan="13" class="text-center py-16 text-[var(--text-tertiary)]"><i class="ri-search-eye-line block text-3xl opacity-30 mb-2"></i>No records found</td></tr>';
+                        renderedCount = 0;
+                        updateLoadMore();
+                        return;
+                    }
+
+                    const batch = renderBatch(0, BATCH);
+                    tbody.innerHTML = batch.html;
+                    renderedCount = batch.rendered;
+                    updateLoadMore();
                 }
-            }
-        });
+
+                function updateLoadMore() {
+                    const bar = document.getElementById('loadMoreBar');
+                    const remain = filteredData.length - renderedCount;
+                    if (remain > 0) {
+                        bar.classList.remove('hidden');
+                        document.getElementById('remainCount').textContent = remain;
+                    } else {
+                        bar.classList.add('hidden');
+                    }
+                }
+
+                window.loadMore = function () {
+                    const batch = renderBatch(renderedCount, BATCH);
+                    document.getElementById('tableBody').insertAdjacentHTML('beforeend', batch.html);
+                    renderedCount = batch.rendered;
+                    updateLoadMore();
+                };
+
+                /* ═══ AUTO-LOAD ON SCROLL ═══ */
+                const tableScroll = document.getElementById('tableScroll');
+                let scrollTicking = false;
+                tableScroll.addEventListener('scroll', function () {
+                    if (scrollTicking) return;
+                    scrollTicking = true;
+                    requestAnimationFrame(() => {
+                        const el = tableScroll;
+                        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+                            if (renderedCount < filteredData.length) window.loadMore();
+                        }
+                        scrollTicking = false;
+                    });
+                }, { passive: true });
+
+                /* ═══ STATS ═══ */
+                function updateStats() {
+                    const passEl = document.getElementById('stat-pass');
+                    const passInfo = document.getElementById('stat-pass-info');
+
+                    if (!filteredData.length) {
+                        document.getElementById('stat-count').textContent = '--';
+                        document.getElementById('stat-avg').textContent = '--';
+                        document.getElementById('stat-topper').textContent = '--';
+                        passEl.textContent = '--';
+                        passInfo.textContent = 'Min 33 per subject';
+                        return;
+                    }
+
+                    const total = filteredData.reduce((a, c) => a + c.total, 0);
+                    const n = filteredData.length;
+
+                    // Top performer
+                    const topper = filteredData.reduce((p, c) => p.total > c.total ? p : c);
+                    document.getElementById('stat-topper').textContent = topper.total;
+
+                    // Count
+                    document.getElementById('stat-count').textContent = n;
+
+                    // Average
+                    document.getElementById('stat-avg').textContent = (total / n).toFixed(1);
+
+                    // Pass rate: pass if scored >= 33 in EACH subject
+                    const passed = filteredData.filter(s => s.ps >= 33 && s.fsd >= 33 && s.fcsp >= 33 && s.de >= 33).length;
+                    const failed = n - passed;
+                    const rate = ((passed / n) * 100).toFixed(1);
+
+                    passEl.textContent = rate + '%';
+                    if (failed === 0) {
+                        passInfo.textContent = 'All ' + n + ' Cleared \u2714';
+                    } else {
+                        passInfo.textContent = passed + ' passed \u00B7 ' + failed + ' failed';
+                    }
+                }
+
+                /* ═══ CHART (throttled) ═══ */
+                function scheduleChartUpdate() {
+                    if (chartRafId) cancelAnimationFrame(chartRafId);
+                    chartRafId = requestAnimationFrame(updateChart);
+                }
+
+                function updateChart() {
+                    chartRafId = null;
+                    const ctx = document.getElementById('gradeChart').getContext('2d');
+                    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    if (gradeChart) gradeChart.destroy();
+
+                    const subs = ['ps', 'fsd', 'fcsp', 'de'];
+                    const n = filteredData.length || 1;
+                    const avgs = subs.map(k => (filteredData.reduce((a, s) => a + s[k], 0) / n).toFixed(1));
+
+                    gradeChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Prob. & Stats', 'Full Stack Dev', 'FCSP / Python', 'Digital Elec.'],
+                            datasets: [{
+                                label: 'Avg',
+                                data: avgs,
+                                backgroundColor: ['rgba(124,106,239,0.6)', 'rgba(34,211,238,0.6)', 'rgba(236,72,153,0.6)', 'rgba(251,191,36,0.6)'],
+                                borderRadius: 6, barThickness: 32
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            animation: false, // NO animation = instant
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: {
+                                    beginAtZero: true, max: 100,
+                                    grid: { color: dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)', drawBorder: false },
+                                    ticks: { color: dark ? '#5c5f73' : '#9ca0b0', font: { size: 10 } }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: dark ? '#5c5f73' : '#9ca0b0', font: { size: 10 } }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                /* ═══ SORT ═══ */
+                let sortDir = 'desc';
+                let lastSortKey = '';
+                window.sortTable = function (key) {
+                    // Toggle direction, or reset to asc if new column
+                    if (lastSortKey === key) {
+                        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortDir = 'asc';
+                        lastSortKey = key;
+                    }
+
+                    filteredData.sort((a, b) => {
+                        let va, vb;
+
+                        if (key === 'rank') {
+                            // Sort by displayed rank
+                            va = currentDept === 'Overall' ? a.globalRank : a.deptRank;
+                            vb = currentDept === 'Overall' ? b.globalRank : b.deptRank;
+                        } else if (key === 'roll') {
+                            // In Rank View, Roll No shows the rank; in Classic View, the original roll
+                            if (currentMode === 'new') {
+                                va = currentDept === 'Overall' ? a.globalRank : a.deptRank;
+                                vb = currentDept === 'Overall' ? b.globalRank : b.deptRank;
+                            } else {
+                                va = a.roll; vb = b.roll;
+                            }
+                        } else if (key === 'div') {
+                            // Sort by displayed division
+                            if (currentMode === 'new' && currentDept !== 'Overall') {
+                                va = a.rankDiv || a.div; vb = b.rankDiv || b.div;
+                            } else {
+                                va = a.div; vb = b.div;
+                            }
+                        } else if (key === 'total') {
+                            va = a.total; vb = b.total;
+                        } else {
+                            va = a[key]; vb = b[key];
+                        }
+
+                        // Handle string vs number comparison
+                        if (typeof va === 'string') va = va.toLowerCase();
+                        if (typeof vb === 'string') vb = vb.toLowerCase();
+
+                        return (va < vb ? -1 : va > vb ? 1 : 0) * (sortDir === 'asc' ? 1 : -1);
+                    });
+
+                    renderTable();
+                };
+
+                /* ═══ EXPORT ═══ */
+                window.exportCSV = function () {
+                    let csv = 'Rank,Roll No,DEPT,Division,Branch,Enrollment,Name,Mentor,PS,FSD,FCSP,DE,Total\n';
+                    filteredData.forEach(s => {
+                        const rk = currentDept === 'Overall' ? s.globalRank : s.deptRank;
+                        csv += `${rk},${currentMode === 'new' ? rk : s.roll},${s.dept},${s.div},${s.branch},${s.enrollment},"${s.name}",${s.mentor},${s.ps},${s.fsd},${s.fcsp},${s.de},${s.total}\n`;
+                    });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+                    a.download = `Marksheet_${currentMode}_${currentDept}.csv`;
+                    a.click(); URL.revokeObjectURL(a.href);
+                };
+
+                /* ═══ MASTER RUN ═══ */
+                function run() {
+                    filterData();
+                    renderTable();
+                    updateStats();
+                    scheduleChartUpdate();
+                }
+
+                /* ═══ EVENTS ═══ */
+                document.getElementById('searchInput').addEventListener('input', () => {
+                    clearTimeout(debounceId);
+                    debounceId = setTimeout(run, 200);
+                });
+                document.getElementById('branchFilter').addEventListener('change', run);
+                document.getElementById('divFilter').addEventListener('change', run);
+
+                // Identity lock
+                document.getElementById('searchInput').addEventListener('input', e => {
+                    const v = e.target.value.toLowerCase().trim();
+                    if (v.length >= 3) { const s = allData.find(x => x.roll == v || x.name.toLowerCase().includes(v)); if (s) localStorage.setItem('my_identity_roll', s.roll); }
+                });
+                document.getElementById('tableBody').addEventListener('click', e => {
+                    const tr = e.target.closest('tr');
+                    if (tr && tr.cells[1]) { const r = tr.cells[1].innerText; if (r && /^\d+$/.test(r)) localStorage.setItem('my_identity_roll', r); }
+                });
+
+                /* ═══ INIT ═══ */
+                window.onload = () => {
+                    const vt = document.querySelector('.view-tab.active');
+                    if (vt) { setIndicator(vt, 'tabIndicator'); vt.style.color = '#fff'; }
+                    const dt = document.querySelector('.dept-tab[onclick*="SY4"]');
+                    if (dt) window.setDept('SY4', dt);
+                };
+
+            })();
     </script>
 </body>
 
